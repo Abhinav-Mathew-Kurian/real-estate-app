@@ -7,9 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed:admin": "tsx scripts/seed-admin.ts",
-    "seed:geo": "tsx scripts/seed-geo.ts",
-    "seed:demo": "tsx scripts/seed-demo.ts"
+    "seed:admin": "tsx --env-file=.env.local scripts/seed-admin.ts",
+    "seed:geo": "tsx --env-file=.env.local scripts/seed-geo.ts",
+    "seed:demo": "tsx --env-file=.env.local scripts/seed-demo.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

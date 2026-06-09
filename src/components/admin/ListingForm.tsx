@@ -34,6 +34,7 @@ import {
   Upload,
   CheckCircle,
   AlertCircle,
+  Sparkles,
 } from "lucide-react";
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -80,11 +81,13 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [highlightInput, setHighlightInput] = useState("");
+  const [aiDescLoading, setAiDescLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
     setValue,
+    getValues,
     control,
     watch,
     formState: { errors },
@@ -188,6 +191,41 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
     setValue("highlights", current.filter((_, i) => i !== idx));
   }
 
+  async function generateDescription() {
+    setAiDescLoading(true);
+    try {
+      const vals = getValues();
+      const res = await fetch("/api/ai/describe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: vals.title,
+          type: vals.type,
+          category: vals.category,
+          district: vals.district,
+          taluk: vals.taluk,
+          village: vals.village,
+          area: vals.areaValue && vals.areaUnit ? { value: vals.areaValue, unit: vals.areaUnit } : undefined,
+          bedrooms: vals.bedrooms,
+          bathrooms: vals.bathrooms,
+          facing: vals.facing,
+          furnishing: vals.furnishing,
+          ageYears: vals.ageYears,
+          highlights: vals.highlights,
+          askingPrice: vals.askingPrice,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.description) setValue("description", data.description);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setAiDescLoading(false);
+    }
+  }
+
   async function onSubmit(data: ListingFormData, statusOverride?: string) {
     setSaving(true);
     setSaveError("");
@@ -278,13 +316,29 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
           <Input {...register("title")} placeholder="e.g. 3 BHK Villa in Kakkanad with Pool" />
         </Field>
 
-        <Field label="Description">
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-ink">Description</label>
+            <button
+              type="button"
+              onClick={generateDescription}
+              disabled={aiDescLoading}
+              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-emerald-brand/40 text-emerald-brand hover:bg-emerald-brand/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {aiDescLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5" />
+              )}
+              {aiDescLoading ? "Generating…" : "Generate with AI"}
+            </button>
+          </div>
           <Textarea
             {...register("description")}
             rows={5}
             placeholder="Describe the property, neighbourhood, key features…"
           />
-        </Field>
+        </div>
       </Section>
 
       {/* ── Location ── */}

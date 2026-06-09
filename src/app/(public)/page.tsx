@@ -5,6 +5,7 @@ import { connectDB } from "@/lib/db";
 import Listing from "@/models/Listing";
 import { KERALA_DISTRICTS } from "@/lib/geo-data";
 import { SearchBar } from "@/components/public/SearchBar";
+import { AISearchBox } from "@/components/public/AISearchBox";
 import { ListingCard } from "@/components/public/ListingCard";
 import {
   HeroContainer,
@@ -154,10 +155,11 @@ export default async function HomePage() {
             </HeroItem>
 
             <HeroItem>
-              <div className="max-w-3xl mx-auto">
+              <div className="max-w-3xl mx-auto space-y-3">
                 <Suspense>
                   <SearchBar />
                 </Suspense>
+                <AISearchBox className="w-full" />
               </div>
             </HeroItem>
           </HeroContainer>
