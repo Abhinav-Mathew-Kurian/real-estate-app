@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     }
 
     const apiKey = process.env.OPENROUTER_API_KEY;
-    const model = process.env.OPENROUTER_MODEL ?? "meta-llama/llama-3.1-8b-instruct:free";
+    const model = process.env.OPENROUTER_MODEL ?? "mistralai/mistral-7b-instruct:free";
 
     if (!apiKey) {
       return NextResponse.json({ error: "AI not configured" }, { status: 503 });
