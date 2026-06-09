@@ -1,27 +1,115 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /* Kerala brand palette */
+  --color-forest: #1B4332;
+  --color-emerald-brand: #2D6A4F;
+  --color-leaf: #40916C;
+  --color-sage: #95D5B2;
+  --color-mist: #F1F7F4;
+  --color-cream: #FBFCF8;
+  --color-laterite: #B5651D;
+  --color-ink: #14201A;
+  --color-muted-text: #5B6B63;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+  /* Typography */
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Border radius */
+  --radius: 0.625rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  .font-display {
+    font-family: var(--font-display);
+  }
+}
+
+@layer base {
+  :root {
+    /* Kerala design tokens */
+    --forest:    #1B4332;
+    --emerald:   #2D6A4F;
+    --leaf:      #40916C;
+    --sage:      #95D5B2;
+    --mist:      #F1F7F4;
+    --cream:     #FBFCF8;
+    --laterite:  #B5651D;
+    --ink:       #14201A;
+    --muted-color: #5B6B63;
+
+    /* shadcn semantic tokens → Kerala mapped */
+    --background: #F1F7F4;
+    --foreground: #14201A;
+    --card: #FBFCF8;
+    --card-foreground: #14201A;
+    --popover: #FBFCF8;
+    --popover-foreground: #14201A;
+    --primary: #2D6A4F;
+    --primary-foreground: #FBFCF8;
+    --secondary: #EDF5F0;
+    --secondary-foreground: #1B4332;
+    --muted: #E8F2EC;
+    --muted-foreground: #5B6B63;
+    --accent: #95D5B2;
+    --accent-foreground: #1B4332;
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: #FBFCF8;
+    --border: #D4E8DC;
+    --input: #D4E8DC;
+    --ring: #2D6A4F;
+
+    /* Chart colours */
+    --chart-1: #2D6A4F;
+    --chart-2: #40916C;
+    --chart-3: #95D5B2;
+    --chart-4: #B5651D;
+    --chart-5: #1B4332;
+
+    /* Sidebar */
+    --sidebar: #1B4332;
+    --sidebar-foreground: #F1F7F4;
+    --sidebar-primary: #95D5B2;
+    --sidebar-primary-foreground: #1B4332;
+    --sidebar-accent: #2D6A4F;
+    --sidebar-accent-foreground: #F1F7F4;
+    --sidebar-border: #2D6A4F;
+    --sidebar-ring: #40916C;
+
+    /* radius */
+    --radius: 0.625rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.25rem;
+  }
+
+  * {
+    border-color: var(--border);
+    outline-color: color-mix(in srgb, var(--ring) 50%, transparent);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
