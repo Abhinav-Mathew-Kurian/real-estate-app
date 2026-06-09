@@ -11,7 +11,7 @@ import { ImageGallery } from "./ImageGallery";
 import { EnquirySection } from "./EnquirySection";
 import { MapPlaceholder } from "./MapPlaceholder";
 
-type Props = { params: { slug: string } };
+type Props = { params: Promise<{ slug: string }> };
 
 async function getListing(slug: string) {
   await connectDB();
@@ -20,7 +20,8 @@ async function getListing(slug: string) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const listing = await getListing(params.slug);
+  const { slug } = await params;
+  const listing = await getListing(slug);
   if (!listing) return { title: "Property Not Found" };
 
   const cover = listing.images?.[listing.coverIndex ?? 0] ?? listing.images?.[0];
@@ -55,11 +56,12 @@ async function incrementView(slug: string) {
 }
 
 export default async function ListingDetailPage({ params }: Props) {
-  const listing = await getListing(params.slug);
+  const { slug } = await params;
+  const listing = await getListing(slug);
   if (!listing) notFound();
 
   // Increment view count (fire and forget)
-  void incrementView(params.slug);
+  void incrementView(slug);
 
   const cover = listing.images?.[listing.coverIndex ?? 0] ?? listing.images?.[0];
   const hasGeo = !!(listing.geo?.coordinates?.[0] && listing.geo?.coordinates?.[1]);

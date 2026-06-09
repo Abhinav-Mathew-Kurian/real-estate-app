@@ -30,11 +30,10 @@ const TYPE_LABELS: Record<string, string> = {
   LEASE: "Lease",
 };
 
-export default async function AdminListingsPage({
-  searchParams,
-}: {
-  searchParams: { type?: string; status?: string; q?: string; page?: string };
+export default async function AdminListingsPage(props: {
+  searchParams: Promise<{ type?: string; status?: string; q?: string; page?: string }>;
 }) {
+  const searchParams = await props.searchParams;
   await connectDB();
 
   const page = Math.max(1, parseInt(searchParams.page ?? "1"));

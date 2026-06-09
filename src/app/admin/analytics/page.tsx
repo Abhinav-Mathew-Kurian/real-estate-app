@@ -1,13 +1,8 @@
 import { Metadata } from "next";
-import dynamic from "next/dynamic";
 import { connectDB } from "@/lib/db";
 import Listing from "@/models/Listing";
 import Lead from "@/models/Lead";
-
-const AnalyticsDashboard = dynamic(
-  () => import("./AnalyticsDashboard").then((m) => ({ default: m.AnalyticsDashboard })),
-  { ssr: false }
-);
+import { AnalyticsDashboardLoader } from "./AnalyticsDashboardLoader";
 
 export const metadata: Metadata = { title: "Analytics" };
 
@@ -140,7 +135,7 @@ export default async function AdminAnalyticsPage() {
           Property views, leads, and enquiries — last 30 days
         </p>
       </div>
-      <AnalyticsDashboard data={data} />
+      <AnalyticsDashboardLoader data={data} />
     </div>
   );
 }

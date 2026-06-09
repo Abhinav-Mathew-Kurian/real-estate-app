@@ -22,11 +22,10 @@ const STATUS_STYLES: Record<string, string> = {
   closed: "bg-green-50 text-green-700 border-green-200",
 };
 
-export default async function AdminLeadsPage({
-  searchParams,
-}: {
-  searchParams: { status?: string; page?: string };
+export default async function AdminLeadsPage(props: {
+  searchParams: Promise<{ status?: string; page?: string }>;
 }) {
+  const searchParams = await props.searchParams;
   await connectDB();
 
   const page = Math.max(1, parseInt(searchParams.page ?? "1"));

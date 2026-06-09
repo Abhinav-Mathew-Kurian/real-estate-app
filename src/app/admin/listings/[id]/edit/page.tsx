@@ -9,10 +9,11 @@ export const metadata: Metadata = { title: "Edit Listing" };
 export default async function EditListingPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   await connectDB();
-  const listing = await Listing.findById(params.id).lean();
+  const listing = await Listing.findById(id).lean();
   if (!listing) notFound();
 
   const defaultValues = {
@@ -60,17 +61,10 @@ export default async function EditListingPage({
   return (
     <div className="max-w-3xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-display font-semibold text-forest">
-          Edit Listing
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1 truncate">
-          {listing.title}
-        </p>
+        <h1 className="text-2xl font-display font-semibold text-forest">Edit Listing</h1>
+        <p className="text-sm text-muted-foreground mt-1 truncate">{listing.title}</p>
       </div>
-      <ListingForm
-        listingId={params.id}
-        defaultValues={defaultValues}
-      />
+      <ListingForm listingId={id} defaultValues={defaultValues} />
     </div>
   );
 }

@@ -5,7 +5,7 @@ import Listing from "@/models/Listing";
 import { listingSchema } from "@/lib/schemas/listing";
 import { slugify } from "@/lib/format";
 import { computePricePerCent } from "@/lib/units";
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import mongoose from "mongoose";
 
 export async function GET(req: Request) {
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
     createdBy: session.user.id,
   });
 
-  revalidateTag("listings");
+  updateTag("listings");
 
   return NextResponse.json({ listing }, { status: 201 });
 }

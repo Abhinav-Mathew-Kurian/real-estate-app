@@ -4,22 +4,20 @@ import { connectDB } from "@/lib/db";
 import Listing from "@/models/Listing";
 import { listingSchema } from "@/lib/schemas/listing";
 import { computePricePerCent } from "@/lib/units";
-import { revalidateTag } from "next/cache";
+import { updateTag } from "next/cache";
 
-export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } }
-) {
+type Context = { params: Promise<{ id: string }> };
+
+export async function GET(_req: Request, { params }: Context) {
+  const { id } = await params;
   await connectDB();
-  const listing = await Listing.findById(params.id).lean();
+  const listing = await Listing.findById(id).lean();
   if (!listing) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ listing });
 }
 
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: Request, { params }: Context) {
+  const { id } = await params;
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -77,36 +75,34 @@ export async function PUT(
   if (data.highlights !== undefined) updates.highlights = data.highlights;
 
   const listing = await Listing.findByIdAndUpdate(
-    params.id,
+    id,
     { $set: updates },
     { new: true }
   ).lean();
 
   if (!listing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  revalidateTag("listings");
-  revalidateTag(`listing:${listing.slug}`);
+  updateTag("listings");
+  updateTag(`listing:${listing.slug}`);
 
   return NextResponse.json({ listing });
 }
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_req: Request, { params }: Context) {
+  const { id } = await params;
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   await connectDB();
   const listing = await Listing.findByIdAndUpdate(
-    params.id,
+    id,
     { $set: { status: "archived" } },
     { new: true }
   ).lean();
 
   if (!listing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  revalidateTag("listings");
+  updateTag("listings");
 
   return NextResponse.json({ success: true });
 }
