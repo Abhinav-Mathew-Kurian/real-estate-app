@@ -57,8 +57,9 @@ async function incrementView(slug: string) {
 
 export default async function ListingDetailPage({ params }: Props) {
   const { slug } = await params;
-  const listing = await getListing(slug);
-  if (!listing) notFound();
+  const rawListing = await getListing(slug);
+  if (!rawListing) notFound();
+  const listing = JSON.parse(JSON.stringify(rawListing)) as typeof rawListing;
 
   // Increment view count (fire and forget)
   void incrementView(slug);
@@ -80,10 +81,7 @@ export default async function ListingDetailPage({ params }: Props) {
     .limit(3)
     .lean();
 
-  const relatedPlain = related.map((l) => ({
-    ...l,
-    _id: l._id.toString(),
-  })) as unknown as IListing[];
+  const relatedPlain = JSON.parse(JSON.stringify(related)) as IListing[];
 
   const listingId = listing._id.toString();
 
