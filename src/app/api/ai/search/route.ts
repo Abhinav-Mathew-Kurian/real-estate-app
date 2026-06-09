@@ -102,9 +102,11 @@ export async function POST(req: NextRequest) {
       filter.askingPrice = pf;
     }
 
-    // If intent extraction failed entirely, fall back to text search
-    if (!Object.keys(intent).some((k) => intent[k as keyof typeof intent])) {
-      filter.$text = { $search: query };
+    // If intent extraction failed entirely, fall back to regex search
+    const hasIntent = !!(intent.type || intent.district || intent.category || intent.minPrice || intent.maxPrice || intent.bedrooms);
+    if (!hasIntent) {
+      const re = { $regex: query, $options: "i" };
+      filter.$or = [{ title: re }, { description: re }, { village: re }, { district: re }];
     }
 
     const listings = await Listing.find(filter)

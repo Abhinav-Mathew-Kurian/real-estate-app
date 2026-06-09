@@ -107,7 +107,6 @@ const ListingSchema = new Schema<IListing>(
       },
       coordinates: {
         type: [Number],
-        index: "2dsphere",
       },
     },
 
@@ -153,6 +152,7 @@ ListingSchema.index({ status: 1, type: 1 });
 ListingSchema.index({ district: 1, status: 1 });
 ListingSchema.index({ isFeatured: 1, status: 1 });
 ListingSchema.index({ "geo.coordinates": "2dsphere" });
+ListingSchema.index({ title: "text", description: "text", village: "text", district: "text", taluk: "text" });
 
 const Listing: Model<IListing> =
   mongoose.models.Listing ?? mongoose.model<IListing>("Listing", ListingSchema);

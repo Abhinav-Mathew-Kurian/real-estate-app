@@ -4,6 +4,7 @@ import Listing from "@/models/Listing";
 import { KERALA_DISTRICTS, TALUKS_BY_DISTRICT } from "@/lib/geo-data";
 import { ListingCard } from "@/components/public/ListingCard";
 import { SearchFilters } from "./SearchFilters";
+import { SortSelect } from "./SortSelect";
 import type { IListing } from "@/models/Listing";
 
 type SearchContentProps = {
@@ -16,12 +17,6 @@ function getParam(params: Record<string, string | string[] | undefined>, key: st
   return val ?? "";
 }
 
-const SORT_OPTIONS = [
-  { label: "Newest", value: "newest" },
-  { label: "Price: Low → High", value: "price_asc" },
-  { label: "Price: High → Low", value: "price_desc" },
-  { label: "Area: Low → High", value: "area_asc" },
-];
 
 export async function SearchContent({ searchParams }: SearchContentProps) {
   await connectDB();
@@ -49,7 +44,10 @@ export async function SearchContent({ searchParams }: SearchContentProps) {
   if (category) filter.category = category;
   if (featured === "true") filter.isFeatured = true;
   if (beds) filter.bedrooms = { $gte: parseInt(beds) };
-  if (q) filter.$text = { $search: q };
+  if (q) {
+    const re = { $regex: q, $options: "i" };
+    filter.$or = [{ title: re }, { description: re }, { village: re }, { district: re }];
+  }
 
   if (minPrice || maxPrice) {
     const priceFilter: Record<string, number> = {};
@@ -82,10 +80,7 @@ export async function SearchContent({ searchParams }: SearchContentProps) {
 
   const totalPages = Math.ceil(total / limit);
 
-  const plainListings = listings.map((l) => ({
-    ...l,
-    _id: l._id.toString(),
-  })) as unknown as IListing[];
+  const plainListings = JSON.parse(JSON.stringify(listings)) as IListing[];
 
   // Build pagination URL helper
   function pageUrl(p: number) {
@@ -149,37 +144,15 @@ export async function SearchContent({ searchParams }: SearchContentProps) {
               )}
             </div>
 
-            {/* Sort */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-muted-foreground" htmlFor="sort-select">
-                Sort:
-              </label>
-              <select
-                id="sort-select"
-                defaultValue={sort}
-                className="text-sm border border-border rounded-lg px-3 py-1.5 bg-cream text-ink focus:outline-none focus:ring-2 focus:ring-emerald-brand"
-                onChange={(e) => {
-                  if (typeof window !== "undefined") {
-                    const params = new URLSearchParams(window.location.search);
-                    params.set("sort", e.target.value);
-                    params.delete("page");
-                    window.location.href = `/search?${params.toString()}`;
-                  }
-                }}
-              >
-                {SORT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SortSelect defaultValue={sort} />
           </div>
 
           {/* Grid */}
           {plainListings.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
-              <div className="text-5xl mb-4">🔍</div>
+              <div className="w-16 h-16 rounded-2xl bg-mist border border-border flex items-center justify-center mb-6">
+                <svg className="w-7 h-7 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              </div>
               <h2 className="text-xl font-semibold text-forest mb-2">
                 No properties found
               </h2>
