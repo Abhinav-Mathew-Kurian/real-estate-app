@@ -1,8 +1,13 @@
 import { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { connectDB } from "@/lib/db";
 import Listing from "@/models/Listing";
 import Lead from "@/models/Lead";
-import { AnalyticsDashboard } from "./AnalyticsDashboard";
+
+const AnalyticsDashboard = dynamic(
+  () => import("./AnalyticsDashboard").then((m) => ({ default: m.AnalyticsDashboard })),
+  { ssr: false }
+);
 
 export const metadata: Metadata = { title: "Analytics" };
 
