@@ -1,6 +1,22 @@
 import Link from "next/link";
 import { connectDB } from "@/lib/db";
 import Listing from "@/models/Listing";
+
+const TYPE_LABELS: Record<string, string> = {
+  SELL_HOME: "Buy Home",
+  SELL_LAND: "Buy Land",
+  RENT: "For Rent",
+  LEASE: "For Lease",
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  villa: "Villa",
+  apartment: "Apartment",
+  house: "House",
+  plot: "Plot",
+  commercial: "Commercial",
+  agricultural: "Agricultural",
+};
 import { KERALA_DISTRICTS, TALUKS_BY_DISTRICT } from "@/lib/geo-data";
 import { ListingCard } from "@/components/public/ListingCard";
 import { SearchFilters } from "./SearchFilters";
@@ -135,12 +151,29 @@ export async function SearchContent({ searchParams }: SearchContentProps) {
                   ? "No properties found"
                   : `${total} propert${total === 1 ? "y" : "ies"} found`}
               </h1>
-              {(type || district) && (
-                <p className="text-sm text-muted-foreground mt-0.5">
-                  {[type && `Type: ${type}`, district && `District: ${district}`]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
+              {(type || district || category || beds) && (
+                <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                  {type && (
+                    <span className="inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-brand/10 text-emerald-brand">
+                      {TYPE_LABELS[type] ?? type}
+                    </span>
+                  )}
+                  {category && (
+                    <span className="inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full bg-forest/10 text-forest">
+                      {CATEGORY_LABELS[category] ?? category}
+                    </span>
+                  )}
+                  {district && (
+                    <span className="inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full bg-mist border border-border text-ink">
+                      {district}
+                    </span>
+                  )}
+                  {beds && (
+                    <span className="inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full bg-mist border border-border text-ink">
+                      {beds}+ BHK
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 
