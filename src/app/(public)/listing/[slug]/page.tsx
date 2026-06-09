@@ -9,8 +9,7 @@ import type { IListing } from "@/models/Listing";
 import { ListingCard } from "@/components/public/ListingCard";
 import { ImageGallery } from "./ImageGallery";
 import { EnquirySection } from "./EnquirySection";
-import { PropertyMap } from "./PropertyMap";
-import { NearbyPlaces } from "./NearbyPlaces";
+import { PropertySection } from "./PropertySection";
 import { WhatsAppCallBar } from "@/components/public/WhatsAppCallBar";
 import { ShareButton } from "@/components/public/ShareButton";
 
@@ -190,31 +189,31 @@ export default async function ListingDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* Location */}
-              <div className="bg-cream rounded-2xl border border-border p-6">
-                <h2 className="font-display text-xl font-semibold text-forest mb-4">Location</h2>
-                <div className="space-y-1.5 text-sm text-ink/80 mb-4">
-                  <p><span className="font-medium text-ink">Village:</span> {listing.village}</p>
-                  <p><span className="font-medium text-ink">Taluk:</span> {listing.taluk}</p>
-                  <p><span className="font-medium text-ink">District:</span> {listing.district}</p>
-                  {listing.address && <p><span className="font-medium text-ink">Address:</span> {listing.address}</p>}
-                </div>
-
-                {/* Map with routing */}
-                {hasGeo && lat && lng ? (
-                  <PropertyMap lat={lat} lng={lng} title={listing.title} listingId={listingId} />
-                ) : (
-                  <div className="h-48 rounded-xl bg-mist flex items-center justify-center text-muted-foreground text-sm">
-                    Map not available for this listing
-                  </div>
-                )}
-              </div>
-
-              {/* Nearby places */}
-              {hasGeo && lat && lng && (
+              {/* Location + Nearby (shared selected-place state via PropertySection) */}
+              {hasGeo && lat && lng ? (
+                <PropertySection
+                  lat={lat}
+                  lng={lng}
+                  title={listing.title}
+                  listingId={listingId}
+                  landmarks={listing.nearbyLandmarks ?? []}
+                  village={listing.village}
+                  taluk={listing.taluk}
+                  district={listing.district}
+                  address={listing.address}
+                />
+              ) : (
                 <div className="bg-cream rounded-2xl border border-border p-6">
-                  <h2 className="font-display text-xl font-semibold text-forest mb-4">Nearby Places</h2>
-                  <NearbyPlaces lat={lat} lng={lng} landmarks={listing.nearbyLandmarks ?? []} />
+                  <h2 className="font-display text-xl font-semibold text-forest mb-4">Location</h2>
+                  <div className="space-y-1.5 text-sm text-ink/80 mb-4">
+                    <p><span className="font-medium text-ink">Village:</span> {listing.village}</p>
+                    <p><span className="font-medium text-ink">Taluk:</span> {listing.taluk}</p>
+                    <p><span className="font-medium text-ink">District:</span> {listing.district}</p>
+                    {listing.address && <p><span className="font-medium text-ink">Address:</span> {listing.address}</p>}
+                  </div>
+                  <div className="h-48 rounded-xl bg-mist flex items-center justify-center text-muted-foreground text-sm">
+                    Map not available — coordinates not set for this listing
+                  </div>
                 </div>
               )}
             </div>

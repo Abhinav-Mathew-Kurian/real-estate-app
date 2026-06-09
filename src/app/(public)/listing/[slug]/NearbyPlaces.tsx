@@ -15,8 +15,9 @@ import {
   Navigation,
   AlertCircle,
 } from "lucide-react";
+import type { SelectedPlace } from "./PropertyMapInner";
 
-type Place = { name: string; distanceM: number };
+type Place = { name: string; distanceM: number; lat: number; lng: number };
 type CategoryResult = {
   key: string;
   icon: React.ElementType;
@@ -26,14 +27,14 @@ type CategoryResult = {
 };
 
 const CAT_META: Record<string, { icon: React.ElementType; label: string; color: string }> = {
-  hospital:   { icon: Hospital,     label: "Hospitals & Clinics",    color: "text-red-600 bg-red-50 border-red-100" },
-  pharmacy:   { icon: Pill,         label: "Pharmacies",             color: "text-purple-600 bg-purple-50 border-purple-100" },
-  grocery:    { icon: ShoppingCart, label: "Grocery & Supermarkets", color: "text-green-600 bg-green-50 border-green-100" },
-  school:     { icon: GraduationCap,label: "Schools & Colleges",     color: "text-blue-600 bg-blue-50 border-blue-100" },
-  bank:       { icon: Landmark,     label: "Banks & ATMs",           color: "text-yellow-700 bg-yellow-50 border-yellow-100" },
-  restaurant: { icon: Utensils,     label: "Restaurants & Cafes",    color: "text-orange-600 bg-orange-50 border-orange-100" },
-  fuel:       { icon: Fuel,         label: "Petrol Stations",        color: "text-slate-600 bg-slate-50 border-slate-100" },
-  bus:        { icon: Bus,          label: "Bus Stops",              color: "text-emerald-700 bg-emerald-50 border-emerald-100" },
+  hospital:   { icon: Hospital,      label: "Hospitals & Clinics",    color: "text-red-600 bg-red-50 border-red-100" },
+  pharmacy:   { icon: Pill,          label: "Pharmacies",             color: "text-purple-600 bg-purple-50 border-purple-100" },
+  grocery:    { icon: ShoppingCart,  label: "Grocery & Supermarkets", color: "text-green-600 bg-green-50 border-green-100" },
+  school:     { icon: GraduationCap, label: "Schools & Colleges",     color: "text-blue-600 bg-blue-50 border-blue-100" },
+  bank:       { icon: Landmark,      label: "Banks & ATMs",           color: "text-yellow-700 bg-yellow-50 border-yellow-100" },
+  restaurant: { icon: Utensils,      label: "Restaurants & Cafes",    color: "text-orange-600 bg-orange-50 border-orange-100" },
+  fuel:       { icon: Fuel,          label: "Petrol Stations",        color: "text-slate-600 bg-slate-50 border-slate-100" },
+  bus:        { icon: Bus,           label: "Bus Stops",              color: "text-emerald-700 bg-emerald-50 border-emerald-100" },
 };
 
 function formatDist(m: number): string {
@@ -44,7 +45,7 @@ function formatDist(m: number): string {
 function ManualLandmarks({ landmarks }: { landmarks: string[] }) {
   if (landmarks.length === 0) return null;
   return (
-    <div className="flex flex-wrap gap-2 mb-6">
+    <div className="flex flex-wrap gap-2 mb-5">
       {landmarks.map((lm, i) => (
         <span
           key={i}
@@ -58,7 +59,14 @@ function ManualLandmarks({ landmarks }: { landmarks: string[] }) {
   );
 }
 
-function OverpassResults({ lat, lng }: { lat: number; lng: number }) {
+type OverpassResultsProps = {
+  lat: number;
+  lng: number;
+  onSelectPlace: (place: SelectedPlace | null) => void;
+  selectedPlace: SelectedPlace | null;
+};
+
+function OverpassResults({ lat, lng, onSelectPlace, selectedPlace }: OverpassResultsProps) {
   const [results, setResults] = useState<CategoryResult[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -72,7 +80,6 @@ function OverpassResults({ lat, lng }: { lat: number; lng: number }) {
         const res = await fetch(`/api/nearby?lat=${lat}&lng=${lng}`);
         if (!res.ok) throw new Error("failed");
         const data: Record<string, Place[]> = await res.json();
-
         if (cancelled) return;
 
         const out: CategoryResult[] = Object.entries(data)
@@ -85,11 +92,7 @@ function OverpassResults({ lat, lng }: { lat: number; lng: number }) {
             };
             return { key, ...meta, places };
           })
-          .sort((a, b) => {
-            // sort by category order
-            const order = Object.keys(CAT_META);
-            return order.indexOf(a.key) - order.indexOf(b.key);
-          });
+          .sort((a, b) => Object.keys(CAT_META).indexOf(a.key) - Object.keys(CAT_META).indexOf(b.key));
 
         setResults(out);
       } catch {
@@ -122,7 +125,7 @@ function OverpassResults({ lat, lng }: { lat: number; lng: number }) {
   if (!results || results.length === 0) {
     return (
       <p className="text-sm text-muted-foreground py-2">
-        No nearby places found within the search radius.
+        No nearby places found in map data for this area.
       </p>
     );
   }
@@ -130,35 +133,51 @@ function OverpassResults({ lat, lng }: { lat: number; lng: number }) {
   return (
     <div>
       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-        Auto-detected from map data
+        Auto-detected · click a place to see it on the map
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {results.map((cat) => {
           const Icon = cat.icon;
           const [textColor, bgColor, borderColor] = cat.color.split(" ");
           return (
-            <div
-              key={cat.key}
-              className={`rounded-xl p-4 border ${bgColor} ${borderColor}`}
-            >
+            <div key={cat.key} className={`rounded-xl p-4 border ${bgColor} ${borderColor}`}>
               <div className="flex items-center gap-2.5 mb-3">
                 <span className={`p-1.5 rounded-lg bg-white/70 ${textColor}`}>
                   <Icon className="w-4 h-4" />
                 </span>
                 <span className={`text-xs font-semibold ${textColor}`}>{cat.label}</span>
               </div>
-              <ul className="space-y-1.5">
-                {cat.places.map((place, i) => (
-                  <li key={i} className="flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-1.5 min-w-0">
-                      <MapPin className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
-                      <span className="text-xs text-ink/80 truncate">{place.name}</span>
-                    </div>
-                    <span className="text-[11px] font-semibold text-muted-foreground shrink-0 tabular-nums">
-                      {formatDist(place.distanceM)}
-                    </span>
-                  </li>
-                ))}
+              <ul className="space-y-1">
+                {cat.places.map((place, i) => {
+                  const isSelected =
+                    selectedPlace?.name === place.name &&
+                    selectedPlace?.lat === place.lat;
+                  return (
+                    <li
+                      key={i}
+                      onClick={() =>
+                        onSelectPlace(
+                          isSelected
+                            ? null
+                            : { lat: place.lat, lng: place.lng, name: place.name, distanceM: place.distanceM }
+                        )
+                      }
+                      className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-colors ${
+                        isSelected
+                          ? "bg-orange-100 ring-1 ring-orange-400"
+                          : "hover:bg-white/60"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <MapPin className={`w-3 h-3 shrink-0 ${isSelected ? "text-orange-600" : "text-muted-foreground"}`} />
+                        <span className="text-xs text-ink/80 truncate">{place.name}</span>
+                      </div>
+                      <span className="text-[11px] font-semibold text-muted-foreground shrink-0 tabular-nums">
+                        {formatDist(place.distanceM)}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           );
@@ -172,13 +191,20 @@ type Props = {
   lat: number;
   lng: number;
   landmarks?: string[];
+  onSelectPlace: (place: SelectedPlace | null) => void;
+  selectedPlace: SelectedPlace | null;
 };
 
-export function NearbyPlaces({ lat, lng, landmarks = [] }: Props) {
+export function NearbyPlaces({ lat, lng, landmarks = [], onSelectPlace, selectedPlace }: Props) {
   return (
     <div>
       <ManualLandmarks landmarks={landmarks} />
-      <OverpassResults lat={lat} lng={lng} />
+      <OverpassResults
+        lat={lat}
+        lng={lng}
+        onSelectPlace={onSelectPlace}
+        selectedPlace={selectedPlace}
+      />
     </div>
   );
 }

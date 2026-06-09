@@ -14,6 +14,7 @@ function haversineM(lat1: number, lon1: number, lat2: number, lon2: number): num
 
 type OEl = {
   id: number;
+  type: string;
   lat?: number;
   lon?: number;
   center?: { lat: number; lon: number };
@@ -32,6 +33,7 @@ function categorize(el: OEl): string | null {
   if (a === "fuel") return "fuel";
   if (s === "supermarket" || s === "convenience" || s === "grocery") return "grocery";
   if (h === "bus_stop") return "bus";
+  if (el.tags?.public_transport === "stop_position" || el.tags?.public_transport === "platform") return "bus";
   return null;
 }
 
@@ -40,7 +42,7 @@ const OVERPASS_ENDPOINTS = [
   "https://lz4.overpass-api.de/api/interpreter",
 ];
 
-async function fetchOverpass(query: string): Promise<OEl[]> {
+async function fetchOverpass(query: string, timeoutMs = 14_000): Promise<OEl[]> {
   const body = `data=${encodeURIComponent(query)}`;
   const headers = {
     "Content-Type": "application/x-www-form-urlencoded",
@@ -53,7 +55,7 @@ async function fetchOverpass(query: string): Promise<OEl[]> {
         method: "POST",
         body,
         headers,
-        signal: AbortSignal.timeout(20_000),
+        signal: AbortSignal.timeout(timeoutMs),
       });
       if (!res.ok) continue;
       const data = await res.json();
@@ -74,24 +76,50 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Invalid lat/lng" }, { status: 400 });
   }
 
-  const query = `[out:json][timeout:20];
+  // Phase 1: node-only query — fast, covers rural & suburban areas well
+  // Phase 2: way-only query for hospital/school/bank/grocery — covers urban buildings
+  // Run both in parallel, merge results, deduplicate by OSM id
+  const nodeQuery = `[out:json][timeout:12];
 (
   node["amenity"~"hospital|clinic"](around:3000,${lat},${lng});
-  way["amenity"~"hospital|clinic"](around:3000,${lat},${lng});
   node["amenity"="pharmacy"](around:2000,${lat},${lng});
   node["amenity"~"school|college|university"](around:2500,${lat},${lng});
-  way["amenity"~"school|college|university"](around:2500,${lat},${lng});
   node["amenity"~"bank|atm"](around:1500,${lat},${lng});
   node["amenity"~"restaurant|cafe|fast_food"](around:1500,${lat},${lng});
   node["amenity"="fuel"](around:2000,${lat},${lng});
   node["shop"~"supermarket|convenience|grocery"](around:2000,${lat},${lng});
-  node["highway"="bus_stop"](around:800,${lat},${lng});
+  node["highway"="bus_stop"](around:1000,${lat},${lng});
+  node["public_transport"~"stop_position|platform"](around:1000,${lat},${lng});
+);
+out;`;
+
+  // Way query covers things like hospital buildings, school campuses, malls — common in cities
+  const wayQuery = `[out:json][timeout:12];
+(
+  way["amenity"~"hospital|clinic"](around:3000,${lat},${lng});
+  way["amenity"~"school|college|university"](around:2500,${lat},${lng});
+  way["amenity"~"bank"](around:1500,${lat},${lng});
+  way["shop"~"supermarket|grocery"](around:2000,${lat},${lng});
+  way["amenity"="fuel"](around:2000,${lat},${lng});
 );
 out center;`;
 
-  const elements = await fetchOverpass(query);
+  const [nodeEls, wayEls] = await Promise.all([
+    fetchOverpass(nodeQuery, 14_000),
+    fetchOverpass(wayQuery, 14_000),
+  ]);
 
-  const buckets: Record<string, { name: string; distanceM: number }[]> = {};
+  // Merge, deduplicate by id
+  const seen = new Set<number>();
+  const elements: OEl[] = [];
+  for (const el of [...nodeEls, ...wayEls]) {
+    if (!seen.has(el.id)) {
+      seen.add(el.id);
+      elements.push(el);
+    }
+  }
+
+  const buckets: Record<string, { name: string; distanceM: number; lat: number; lng: number }[]> = {};
 
   for (const el of elements) {
     const cat = categorize(el);
@@ -108,10 +136,10 @@ out center;`;
 
     const distanceM = haversineM(lat, lng, elLat, elLon);
     if (!buckets[cat]) buckets[cat] = [];
-    buckets[cat].push({ name, distanceM });
+    buckets[cat].push({ name, distanceM, lat: elLat, lng: elLon });
   }
 
-  const result: Record<string, { name: string; distanceM: number }[]> = {};
+  const result: Record<string, { name: string; distanceM: number; lat: number; lng: number }[]> = {};
   for (const [cat, places] of Object.entries(buckets)) {
     result[cat] = places
       .sort((a, b) => a.distanceM - b.distanceM)
