@@ -65,6 +65,7 @@ export const listingSchema = z
       ),
 
     highlights: z.array(z.string()).default([]),
+    nearbyLandmarks: z.array(z.string()).default([]),
   });
 
 // Use input type so fields with .default() remain optional in the form

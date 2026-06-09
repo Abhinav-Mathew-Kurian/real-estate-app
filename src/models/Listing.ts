@@ -58,6 +58,7 @@ export interface IListing extends Document {
   youtubeUrl?: string;
 
   highlights: string[];
+  nearbyLandmarks: string[];
 
   viewCount: number;
   enquiryCount: number;
@@ -140,6 +141,7 @@ const ListingSchema = new Schema<IListing>(
     youtubeUrl: String,
 
     highlights: [String],
+    nearbyLandmarks: [String],
 
     viewCount: { type: Number, default: 0 },
     enquiryCount: { type: Number, default: 0 },

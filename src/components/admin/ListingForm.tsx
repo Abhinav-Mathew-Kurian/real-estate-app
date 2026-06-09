@@ -35,10 +35,26 @@ import {
   CheckCircle,
   AlertCircle,
   Sparkles,
+  LocateFixed,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import dynamic from "next/dynamic";
+
+const GeoPickerMap = dynamic(
+  () => import("./GeoPickerMap").then((m) => ({ default: m.GeoPickerMap })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[260px] rounded-xl bg-mist animate-pulse flex items-center justify-center text-muted-foreground text-sm">
+        Loading map…
+      </div>
+    ),
+  }
+);
 
 interface CloudinaryImage {
   url: string;
@@ -81,7 +97,12 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [highlightInput, setHighlightInput] = useState("");
+  const [landmarkInput, setLandmarkInput] = useState("");
   const [aiDescLoading, setAiDescLoading] = useState(false);
+  const [aiLandmarksLoading, setAiLandmarksLoading] = useState(false);
+  const [geoDetecting, setGeoDetecting] = useState(false);
+  const [geoMsg, setGeoMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [showMapPicker, setShowMapPicker] = useState(false);
 
   const {
     register,
@@ -102,6 +123,7 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
       isFeatured: false,
       coverIndex: 0,
       highlights: [],
+      nearbyLandmarks: [],
       ...defaultValues,
     },
   });
@@ -113,6 +135,7 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
   const askingPrice = watch("askingPrice") as number;
   const isFeatured = watch("isFeatured") as boolean;
   const highlights = (watch("highlights") as string[]) ?? [];
+  const nearbyLandmarks = (watch("nearbyLandmarks") as string[]) ?? [];
   const youtubeUrl = watch("youtubeUrl") as string | undefined;
   const coverIndex = (watch("coverIndex") as number) ?? 0;
   const isNegotiable = watch("isNegotiable") as boolean;
@@ -191,6 +214,41 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
     setValue("highlights", current.filter((_, i) => i !== idx));
   }
 
+  function addLandmark() {
+    const val = landmarkInput.trim();
+    if (!val) return;
+    setValue("nearbyLandmarks", [...(nearbyLandmarks ?? []), val]);
+    setLandmarkInput("");
+  }
+
+  function removeLandmark(idx: number) {
+    setValue("nearbyLandmarks", (nearbyLandmarks ?? []).filter((_, i) => i !== idx));
+  }
+
+  async function extractLandmarks() {
+    setAiLandmarksLoading(true);
+    try {
+      const vals = getValues();
+      const res = await fetch("/api/ai/landmarks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: vals.description, highlights: vals.highlights }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.landmarks) && data.landmarks.length > 0) {
+          const existing = (nearbyLandmarks ?? []);
+          const merged = [...existing];
+          for (const l of data.landmarks) {
+            if (!merged.includes(l)) merged.push(l);
+          }
+          setValue("nearbyLandmarks", merged);
+        }
+      }
+    } catch { /* silently fail */ }
+    finally { setAiLandmarksLoading(false); }
+  }
+
   async function generateDescription() {
     setAiDescLoading(true);
     try {
@@ -223,6 +281,34 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
       // silently fail
     } finally {
       setAiDescLoading(false);
+    }
+  }
+
+  async function detectGeo() {
+    const village = getValues("village");
+    const district = getValues("district");
+    if (!village && !district) {
+      setGeoMsg({ type: "err", text: "Fill Village and District first" });
+      return;
+    }
+    setGeoDetecting(true);
+    setGeoMsg(null);
+    try {
+      const q = [village, district, "Kerala", "India"].filter(Boolean).join(", ");
+      const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      if (data.result) {
+        setValue("lat", data.result.lat);
+        setValue("lng", data.result.lng);
+        setGeoMsg({ type: "ok", text: `Located: ${data.result.displayName.split(",").slice(0, 3).join(",")}` });
+        setShowMapPicker(true);
+      } else {
+        setGeoMsg({ type: "err", text: "Location not found — try a more specific address" });
+      }
+    } catch {
+      setGeoMsg({ type: "err", text: "Geocoding failed — check your internet connection" });
+    } finally {
+      setGeoDetecting(false);
     }
   }
 
@@ -398,13 +484,78 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
           <Textarea {...register("address")} rows={2} placeholder="Optional full postal address" />
         </Field>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Latitude">
-            <Input {...register("lat")} type="number" step="any" placeholder="e.g. 10.0261" />
-          </Field>
-          <Field label="Longitude">
-            <Input {...register("lng")} type="number" step="any" placeholder="e.g. 76.3125" />
-          </Field>
+        {/* Geo coordinates with auto-detect + map picker */}
+        <div className="space-y-3 p-4 rounded-xl bg-mist/60 border border-border/60">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-ink flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-emerald-brand" />
+              GPS Coordinates
+              <span className="text-muted-foreground font-normal">(required for map & nearby places)</span>
+            </p>
+            <button
+              type="button"
+              onClick={detectGeo}
+              disabled={geoDetecting}
+              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-emerald-brand text-cream hover:bg-leaf disabled:opacity-60 transition-colors font-medium"
+            >
+              {geoDetecting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <LocateFixed className="w-3.5 h-3.5" />
+              )}
+              {geoDetecting ? "Detecting…" : "Auto-detect from address"}
+            </button>
+          </div>
+
+          {geoMsg && (
+            <div className={`flex items-start gap-2 text-xs px-3 py-2 rounded-lg ${
+              geoMsg.type === "ok"
+                ? "bg-emerald-brand/10 text-emerald-brand border border-emerald-brand/20"
+                : "bg-red-50 text-red-600 border border-red-200"
+            }`}>
+              {geoMsg.type === "ok" ? (
+                <CheckCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              ) : (
+                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              )}
+              {geoMsg.text}
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Latitude">
+              <Input {...register("lat")} type="number" step="any" placeholder="e.g. 10.0261" />
+            </Field>
+            <Field label="Longitude">
+              <Input {...register("lng")} type="number" step="any" placeholder="e.g. 76.3125" />
+            </Field>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowMapPicker((v) => !v)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-ink transition-colors font-medium"
+          >
+            {showMapPicker ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {showMapPicker ? "Hide map" : "Pick on map (click to place pin)"}
+          </button>
+
+          {showMapPicker && (
+            <div className="pt-1">
+              <GeoPickerMap
+                lat={watch("lat") ? Number(watch("lat")) : null}
+                lng={watch("lng") ? Number(watch("lng")) : null}
+                onPick={(lat, lng) => {
+                  setValue("lat", parseFloat(lat.toFixed(6)));
+                  setValue("lng", parseFloat(lng.toFixed(6)));
+                  setGeoMsg({ type: "ok", text: `Pin placed at ${lat.toFixed(5)}, ${lng.toFixed(5)}` });
+                }}
+              />
+              <p className="text-[11px] text-muted-foreground mt-1.5">
+                Click anywhere on the map to drop a pin and set coordinates.
+              </p>
+            </div>
+          )}
         </div>
       </Section>
 
@@ -690,6 +841,47 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
                 onClick={() => removeHighlight(idx)}
                 className="ml-0.5 hover:text-red-600"
               >
+                <X className="w-3 h-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      </Section>
+
+      {/* ── Nearby Landmarks ── */}
+      <Section title="Nearby Landmarks" icon={<MapPin className="w-4 h-4" />}>
+        <p className="text-xs text-muted-foreground mb-3">
+          Add landmarks near this property — e.g. &ldquo;KSRTC Bus Stand – 200m&rdquo;, &ldquo;NH 66 – 500m&rdquo;. Shown on the listing page.
+        </p>
+        <div className="flex gap-2 mb-2">
+          <Input
+            value={landmarkInput}
+            onChange={(e) => setLandmarkInput(e.target.value)}
+            placeholder="e.g. Government Hospital – 1.2 km"
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addLandmark(); } }}
+          />
+          <button
+            type="button"
+            onClick={addLandmark}
+            className="px-3 py-1.5 rounded-lg bg-emerald-brand text-cream text-sm hover:bg-leaf transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={extractLandmarks}
+          disabled={aiLandmarksLoading}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-emerald-brand/40 text-emerald-brand text-xs font-medium hover:bg-emerald-brand/10 disabled:opacity-50 transition-colors mb-3"
+        >
+          {aiLandmarksLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+          {aiLandmarksLoading ? "Extracting…" : "Extract from description"}
+        </button>
+        <div className="flex flex-wrap gap-2">
+          {(nearbyLandmarks ?? []).map((lm, idx) => (
+            <Badge key={idx} className="bg-blue-50 text-blue-700 border-blue-200 gap-1 font-normal">
+              {lm}
+              <button type="button" onClick={() => removeLandmark(idx)} className="ml-0.5 hover:text-red-600">
                 <X className="w-3 h-3" />
               </button>
             </Badge>

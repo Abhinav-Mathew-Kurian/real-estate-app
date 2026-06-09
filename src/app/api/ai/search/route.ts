@@ -36,6 +36,122 @@ Rules:
 - "Trichur" → Thrissur
 - Output ONLY the raw JSON object, absolutely nothing else`;
 
+const SORT = { isFeatured: -1 as const, createdAt: -1 as const };
+
+type FallbackResult = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  listings: any[];
+  effectiveParams: Record<string, string>;
+  isSuggestion: boolean;
+};
+
+async function findWithFallback(
+  intent: z.input<typeof intentSchema>,
+  query: string,
+  hasIntent: boolean
+): Promise<FallbackResult> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async function run(filter: Record<string, unknown>): Promise<any[]> {
+    return Listing.find(filter).sort(SORT).limit(12).lean();
+  }
+
+  // ── Path 1: AI extracted intent ──────────────────────────────────────────
+  if (hasIntent) {
+    const base: Record<string, unknown> = { status: "published" };
+    if (intent.type) base.type = intent.type;
+    if (intent.district) base.district = intent.district;
+    if (intent.category) base.category = intent.category;
+    if (intent.bedrooms) base.bedrooms = { $gte: intent.bedrooms };
+    if (intent.minPrice || intent.maxPrice) {
+      const pf: Record<string, number> = {};
+      if (intent.minPrice) pf.$gte = intent.minPrice;
+      if (intent.maxPrice) pf.$lte = intent.maxPrice;
+      base.askingPrice = pf;
+    }
+
+    function paramsFromFilter(f: Record<string, unknown>): Record<string, string> {
+      const p: Record<string, string> = {};
+      if (f.type) p.type = f.type as string;
+      if (f.district) p.district = f.district as string;
+      if (f.category) p.category = f.category as string;
+      if (f.bedrooms) p.beds = String((f.bedrooms as Record<string, number>).$gte ?? f.bedrooms);
+      const ap = f.askingPrice as Record<string, number> | undefined;
+      if (ap?.$gte) p.minPrice = String(ap.$gte);
+      if (ap?.$lte) p.maxPrice = String(ap.$lte);
+      return p;
+    }
+
+    // Try exact intent
+    let results = await run(base);
+    if (results.length >= 3) return { listings: results, effectiveParams: paramsFromFilter(base), isSuggestion: false };
+
+    // Relax: drop price
+    if (base.askingPrice) {
+      const r = { ...base }; delete r.askingPrice;
+      results = await run(r);
+      if (results.length >= 3) return { listings: results, effectiveParams: paramsFromFilter(r), isSuggestion: true };
+    }
+
+    // Relax: drop price + bedrooms
+    if (base.bedrooms) {
+      const r = { ...base }; delete r.askingPrice; delete r.bedrooms;
+      results = await run(r);
+      if (results.length >= 3) return { listings: results, effectiveParams: paramsFromFilter(r), isSuggestion: true };
+    }
+
+    // Relax: drop category too, keep district + type
+    if (base.category) {
+      const r: Record<string, unknown> = { status: "published" };
+      if (intent.type) r.type = intent.type;
+      if (intent.district) r.district = intent.district;
+      results = await run(r);
+      if (results.length >= 1) return { listings: results, effectiveParams: paramsFromFilter(r), isSuggestion: true };
+    }
+
+    // Relax: district only
+    if (intent.district) {
+      const r = { status: "published", district: intent.district };
+      results = await run(r);
+      if (results.length >= 1) return { listings: results, effectiveParams: paramsFromFilter(r), isSuggestion: true };
+    }
+
+    // Relax: type only
+    if (intent.type) {
+      const r = { status: "published", type: intent.type };
+      results = await run(r);
+      if (results.length >= 1) return { listings: results, effectiveParams: paramsFromFilter(r), isSuggestion: true };
+    }
+  }
+
+  // ── Path 2: Keyword fallback ──────────────────────────────────────────────
+  const tokens = query
+    .split(/\s+/)
+    .map(t => t.replace(/[^\w]/g, ""))
+    .filter(t => t.length >= 3);
+
+  if (tokens.length > 0) {
+    const fields = ["title", "description", "village", "district", "taluk", "category"];
+
+    // ALL tokens must match (AND)
+    const andClauses = tokens.map(t => ({
+      $or: fields.map(f => ({ [f]: { $regex: t, $options: "i" } })),
+    }));
+    let results = await run({ status: "published", $and: andClauses });
+    if (results.length >= 1) return { listings: results, effectiveParams: { q: query }, isSuggestion: false };
+
+    // ANY token matches (OR) — more lenient
+    const orClauses = tokens.flatMap(t =>
+      fields.map(f => ({ [f]: { $regex: t, $options: "i" } }))
+    );
+    results = await run({ status: "published", $or: orClauses });
+    if (results.length >= 1) return { listings: results, effectiveParams: { q: query }, isSuggestion: true };
+  }
+
+  // ── Fallback: return featured/recent so user never sees empty ────────────
+  const listings = await Listing.find({ status: "published" }).sort(SORT).limit(12).lean();
+  return { listings, effectiveParams: {}, isSuggestion: true };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -75,57 +191,24 @@ export async function POST(req: NextRequest) {
         if (res.ok) {
           const data = await res.json();
           const raw = data.choices?.[0]?.message?.content ?? "";
-          // Strip markdown code fences if the model wraps it anyway
           const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
-          const parsed = intentSchema.safeParse(JSON.parse(cleaned));
-          if (parsed.success) intent = parsed.data;
+          try {
+            const parsed = intentSchema.safeParse(JSON.parse(cleaned));
+            if (parsed.success) intent = parsed.data;
+          } catch { /* ignore parse errors */ }
         }
-      } catch {
-        // AI unavailable — fall through to keyword search
-      }
+      } catch { /* AI timeout/unavailable */ }
     }
 
-    // Build DB query from intent + original text (keyword fallback)
     await connectDB();
 
-    const filter: Record<string, unknown> = { status: "published" };
-
-    if (intent.type) filter.type = intent.type;
-    if (intent.district) filter.district = intent.district;
-    if (intent.category) filter.category = intent.category;
-    if (intent.bedrooms) filter.bedrooms = { $gte: intent.bedrooms };
-
-    if (intent.minPrice || intent.maxPrice) {
-      const pf: Record<string, number> = {};
-      if (intent.minPrice) pf.$gte = intent.minPrice;
-      if (intent.maxPrice) pf.$lte = intent.maxPrice;
-      filter.askingPrice = pf;
-    }
-
-    // If intent extraction failed entirely, fall back to regex search
     const hasIntent = !!(intent.type || intent.district || intent.category || intent.minPrice || intent.maxPrice || intent.bedrooms);
-    if (!hasIntent) {
-      const re = { $regex: query, $options: "i" };
-      filter.$or = [{ title: re }, { description: re }, { village: re }, { district: re }];
-    }
-
-    const listings = await Listing.find(filter)
-      .sort({ isFeatured: -1, createdAt: -1 })
-      .limit(12)
-      .lean();
-
-    // Build redirect params from intent
-    const params: Record<string, string> = {};
-    if (intent.type) params.type = intent.type;
-    if (intent.district) params.district = intent.district;
-    if (intent.category) params.category = intent.category;
-    if (intent.bedrooms) params.beds = String(intent.bedrooms);
-    if (intent.maxPrice) params.maxPrice = String(intent.maxPrice);
-    if (intent.minPrice) params.minPrice = String(intent.minPrice);
+    const { listings, effectiveParams, isSuggestion } = await findWithFallback(intent, query, hasIntent);
 
     return NextResponse.json({
       intent,
-      params,
+      params: effectiveParams,
+      isSuggestion,
       count: listings.length,
       listings: listings.map((l) => ({
         ...l,

@@ -1,4 +1,5 @@
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminMobileMenu } from "@/components/admin/AdminMobileMenu";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { SessionProvider } from "next-auth/react";
@@ -29,7 +30,8 @@ export default async function AdminLayout({
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Top bar */}
-          <header className="h-14 bg-cream/90 backdrop-blur border-b border-border flex items-center px-6 gap-4 sticky top-0 z-10">
+          <header className="h-14 bg-cream/90 backdrop-blur border-b border-border flex items-center px-4 sm:px-6 gap-3 sticky top-0 z-10">
+            <AdminMobileMenu />
             <div className="flex-1" />
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-full bg-forest/12 flex items-center justify-center shrink-0">

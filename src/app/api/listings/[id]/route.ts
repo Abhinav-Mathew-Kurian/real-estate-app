@@ -73,6 +73,7 @@ export async function PUT(req: Request, { params }: Context) {
   if (data.coverIndex !== undefined) updates.coverIndex = data.coverIndex;
   if (data.youtubeUrl !== undefined) updates.youtubeUrl = data.youtubeUrl;
   if (data.highlights !== undefined) updates.highlights = data.highlights;
+  if (data.nearbyLandmarks !== undefined) updates.nearbyLandmarks = data.nearbyLandmarks;
 
   const listing = await Listing.findByIdAndUpdate(
     id,

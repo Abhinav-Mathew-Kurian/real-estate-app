@@ -18,9 +18,9 @@ const CATEGORY_LABELS: Record<string, string> = {
   agricultural: "Agricultural",
 };
 import { KERALA_DISTRICTS, TALUKS_BY_DISTRICT } from "@/lib/geo-data";
-import { ListingCard } from "@/components/public/ListingCard";
 import { SearchFilters } from "./SearchFilters";
 import { SortSelect } from "./SortSelect";
+import { SearchResultsView } from "./SearchResultsView";
 import type { IListing } from "@/models/Listing";
 
 type SearchContentProps = {
@@ -47,6 +47,7 @@ export async function SearchContent({ searchParams }: SearchContentProps) {
   const beds = getParam(searchParams, "beds");
   const category = getParam(searchParams, "category");
   const q = getParam(searchParams, "q");
+  const isSuggestion = getParam(searchParams, "suggestion") === "1";
   const sort = getParam(searchParams, "sort") || "newest";
   const featured = getParam(searchParams, "featured");
   const page = Math.max(1, parseInt(getParam(searchParams, "page") || "1"));
@@ -61,8 +62,18 @@ export async function SearchContent({ searchParams }: SearchContentProps) {
   if (featured === "true") filter.isFeatured = true;
   if (beds) filter.bedrooms = { $gte: parseInt(beds) };
   if (q) {
-    const re = { $regex: q, $options: "i" };
-    filter.$or = [{ title: re }, { description: re }, { village: re }, { district: re }];
+    const tokens = q.split(/\s+/).map(t => t.replace(/[^\w]/g, "")).filter(t => t.length >= 3);
+    const fields = ["title", "description", "village", "district", "taluk", "category"];
+    if (tokens.length > 1) {
+      // Each token must appear in at least one searchable field (AND of ORs)
+      filter.$and = tokens.map(t => ({
+        $or: fields.map(f => ({ [f]: { $regex: t, $options: "i" } })),
+      }));
+    } else {
+      // Single word — simple OR across fields
+      const re = { $regex: q, $options: "i" };
+      filter.$or = fields.map(f => ({ [f]: re }));
+    }
   }
 
   if (minPrice || maxPrice) {
@@ -143,6 +154,14 @@ export async function SearchContent({ searchParams }: SearchContentProps) {
 
         {/* ── Results ──────────────────────────── */}
         <div className="flex-1 min-w-0">
+          {/* Suggestion banner */}
+          {isSuggestion && q && total > 0 && (
+            <div className="flex items-center gap-2 mb-4 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              No exact match for &ldquo;{q}&rdquo; — showing closest available properties.
+            </div>
+          )}
+
           {/* Top bar */}
           <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
             <div>
@@ -180,7 +199,7 @@ export async function SearchContent({ searchParams }: SearchContentProps) {
             <SortSelect defaultValue={sort} />
           </div>
 
-          {/* Grid */}
+          {/* Results or empty state */}
           {plainListings.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <div className="w-16 h-16 rounded-2xl bg-mist border border-border flex items-center justify-center mb-6">
@@ -201,14 +220,7 @@ export async function SearchContent({ searchParams }: SearchContentProps) {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-              {plainListings.map((listing) => (
-                <ListingCard
-                  key={listing._id?.toString()}
-                  listing={listing}
-                />
-              ))}
-            </div>
+            <SearchResultsView listings={plainListings} />
           )}
 
           {/* Pagination */}

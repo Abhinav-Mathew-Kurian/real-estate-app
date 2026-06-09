@@ -1,114 +1,124 @@
-import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/db";
-import Listing from "@/models/Listing";
-import { unstable_cache } from "next/cache";
+import { NextRequest, NextResponse } from "next/server";
 
-type Amenity = {
+function haversineM(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+type OEl = {
   id: number;
-  lat: number;
-  lng: number;
-  name: string;
-  type: string;
-  distance: number;
+  lat?: number;
+  lon?: number;
+  center?: { lat: number; lon: number };
+  tags?: Record<string, string>;
 };
 
-type GroupedAmenities = Record<string, Amenity[]>;
-
-function haversineDistance(
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number
-): number {
-  const R = 6371e3; // metres
-  const phi1 = (lat1 * Math.PI) / 180;
-  const phi2 = (lat2 * Math.PI) / 180;
-  const dPhi = ((lat2 - lat1) * Math.PI) / 180;
-  const dLambda = ((lng2 - lng1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(dPhi / 2) ** 2 +
-    Math.cos(phi1) * Math.cos(phi2) * Math.sin(dLambda / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c; // in metres
+function categorize(el: OEl): string | null {
+  const a = el.tags?.amenity;
+  const s = el.tags?.shop;
+  const h = el.tags?.highway;
+  if (a === "hospital" || a === "clinic") return "hospital";
+  if (a === "pharmacy") return "pharmacy";
+  if (a === "school" || a === "college" || a === "university") return "school";
+  if (a === "bank" || a === "atm") return "bank";
+  if (a === "restaurant" || a === "cafe" || a === "fast_food") return "restaurant";
+  if (a === "fuel") return "fuel";
+  if (s === "supermarket" || s === "convenience" || s === "grocery") return "grocery";
+  if (h === "bus_stop") return "bus";
+  return null;
 }
 
-async function fetchNearby(
-  listingId: string,
-  radius: number
-): Promise<GroupedAmenities> {
-  await connectDB();
-  const listing = await Listing.findById(listingId).select("geo").lean();
+const OVERPASS_ENDPOINTS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://lz4.overpass-api.de/api/interpreter",
+];
 
-  if (!listing?.geo?.coordinates) {
-    return {};
+async function fetchOverpass(query: string): Promise<OEl[]> {
+  const body = `data=${encodeURIComponent(query)}`;
+  const headers = {
+    "Content-Type": "application/x-www-form-urlencoded",
+    "User-Agent": "SellKerala/1.0 (kerala real estate platform)",
+  };
+
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        body,
+        headers,
+        signal: AbortSignal.timeout(20_000),
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      return data.elements ?? [];
+    } catch {
+      // try next endpoint
+    }
   }
-
-  const [lng, lat] = listing.geo.coordinates;
-
-  const overpassQuery = `[out:json][timeout:10];(
-    node["amenity"~"hospital|school|college|bank|bus_stop|supermarket|place_of_worship"](around:${radius},${lat},${lng});
-  );out body;`;
-
-  const res = await fetch("https://overpass-api.de/api/interpreter", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `data=${encodeURIComponent(overpassQuery)}`,
-    signal: AbortSignal.timeout(12000),
-  });
-
-  if (!res.ok) return {};
-
-  const data = await res.json();
-  const elements = data.elements ?? [];
-
-  const amenities: Amenity[] = elements.map(
-    (el: { id: number; lat: number; lon: number; tags?: Record<string, string> }) => ({
-      id: el.id,
-      lat: el.lat,
-      lng: el.lon,
-      name: el.tags?.name ?? el.tags?.amenity ?? "Unknown",
-      type: el.tags?.amenity ?? "unknown",
-      distance: haversineDistance(lat, lng, el.lat, el.lon),
-    })
-  );
-
-  // Group by type and sort nearest first
-  const grouped: GroupedAmenities = {};
-  for (const a of amenities) {
-    if (!grouped[a.type]) grouped[a.type] = [];
-    grouped[a.type].push(a);
-  }
-
-  for (const type of Object.keys(grouped)) {
-    grouped[type].sort((a, b) => a.distance - b.distance);
-    grouped[type] = grouped[type].slice(0, 5); // max 5 per type
-  }
-
-  return grouped;
+  return [];
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const listingId = searchParams.get("listingId");
-  const radius = Math.min(5000, Math.max(100, parseInt(searchParams.get("radius") ?? "1500")));
+  const lat = parseFloat(searchParams.get("lat") ?? "");
+  const lng = parseFloat(searchParams.get("lng") ?? "");
 
-  if (!listingId) {
-    return NextResponse.json({ error: "listingId required" }, { status: 400 });
+  if (isNaN(lat) || isNaN(lng)) {
+    return NextResponse.json({ error: "Invalid lat/lng" }, { status: 400 });
   }
 
-  try {
-    const cachedFetch = unstable_cache(
-      () => fetchNearby(listingId, radius),
-      [`nearby-${listingId}-${radius}`],
-      { revalidate: 60 * 60 * 24 * 7 } // 7 days
-    );
+  const query = `[out:json][timeout:20];
+(
+  node["amenity"~"hospital|clinic"](around:3000,${lat},${lng});
+  way["amenity"~"hospital|clinic"](around:3000,${lat},${lng});
+  node["amenity"="pharmacy"](around:2000,${lat},${lng});
+  node["amenity"~"school|college|university"](around:2500,${lat},${lng});
+  way["amenity"~"school|college|university"](around:2500,${lat},${lng});
+  node["amenity"~"bank|atm"](around:1500,${lat},${lng});
+  node["amenity"~"restaurant|cafe|fast_food"](around:1500,${lat},${lng});
+  node["amenity"="fuel"](around:2000,${lat},${lng});
+  node["shop"~"supermarket|convenience|grocery"](around:2000,${lat},${lng});
+  node["highway"="bus_stop"](around:800,${lat},${lng});
+);
+out center;`;
 
-    const grouped = await cachedFetch();
-    return NextResponse.json({ grouped });
-  } catch (err) {
-    console.error("Nearby API error:", err);
-    return NextResponse.json({ grouped: {} });
+  const elements = await fetchOverpass(query);
+
+  const buckets: Record<string, { name: string; distanceM: number }[]> = {};
+
+  for (const el of elements) {
+    const cat = categorize(el);
+    if (!cat) continue;
+    const elLat = el.lat ?? el.center?.lat;
+    const elLon = el.lon ?? el.center?.lon;
+    if (!elLat || !elLon) continue;
+
+    const name =
+      el.tags?.name ||
+      el.tags?.["name:en"] ||
+      el.tags?.["name:ml"] ||
+      cat;
+
+    const distanceM = haversineM(lat, lng, elLat, elLon);
+    if (!buckets[cat]) buckets[cat] = [];
+    buckets[cat].push({ name, distanceM });
   }
+
+  const result: Record<string, { name: string; distanceM: number }[]> = {};
+  for (const [cat, places] of Object.entries(buckets)) {
+    result[cat] = places
+      .sort((a, b) => a.distanceM - b.distanceM)
+      .slice(0, 5);
+  }
+
+  return NextResponse.json(result, {
+    headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" },
+  });
 }

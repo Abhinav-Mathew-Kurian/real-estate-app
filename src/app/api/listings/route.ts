@@ -100,6 +100,7 @@ export async function POST(req: Request) {
     coverIndex: data.coverIndex,
     youtubeUrl: data.youtubeUrl,
     highlights: data.highlights,
+    nearbyLandmarks: data.nearbyLandmarks,
     createdBy: session.user.id,
   });
 

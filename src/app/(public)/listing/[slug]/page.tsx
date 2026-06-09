@@ -9,7 +9,10 @@ import type { IListing } from "@/models/Listing";
 import { ListingCard } from "@/components/public/ListingCard";
 import { ImageGallery } from "./ImageGallery";
 import { EnquirySection } from "./EnquirySection";
-import { MapPlaceholder } from "./MapPlaceholder";
+import { PropertyMap } from "./PropertyMap";
+import { NearbyPlaces } from "./NearbyPlaces";
+import { WhatsAppCallBar } from "@/components/public/WhatsAppCallBar";
+import { ShareButton } from "@/components/public/ShareButton";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -197,15 +200,23 @@ export default async function ListingDetailPage({ params }: Props) {
                   {listing.address && <p><span className="font-medium text-ink">Address:</span> {listing.address}</p>}
                 </div>
 
-                {/* Map */}
+                {/* Map with routing */}
                 {hasGeo && lat && lng ? (
-                  <MapPlaceholder lat={lat} lng={lng} title={listing.title} listingId={listingId} />
+                  <PropertyMap lat={lat} lng={lng} title={listing.title} listingId={listingId} />
                 ) : (
                   <div className="h-48 rounded-xl bg-mist flex items-center justify-center text-muted-foreground text-sm">
                     Map not available for this listing
                   </div>
                 )}
               </div>
+
+              {/* Nearby places */}
+              {hasGeo && lat && lng && (
+                <div className="bg-cream rounded-2xl border border-border p-6">
+                  <h2 className="font-display text-xl font-semibold text-forest mb-4">Nearby Places</h2>
+                  <NearbyPlaces lat={lat} lng={lng} landmarks={listing.nearbyLandmarks ?? []} />
+                </div>
+              )}
             </div>
 
             {/* ── Right column ─────────────────── */}
@@ -213,13 +224,21 @@ export default async function ListingDetailPage({ params }: Props) {
               {/* Price block */}
               <div className="bg-cream rounded-2xl border border-border p-6 sticky top-20">
                 <div className="flex items-start justify-between mb-1">
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${listing.type === "SELL_HOME" ? "bg-emerald-brand text-cream" : listing.type === "SELL_LAND" ? "bg-forest text-cream" : listing.type === "RENT" ? "bg-sage text-forest" : "bg-mist text-forest border border-border"}`}>
-                    {TYPE_LABELS[listing.type] ?? listing.type}
-                  </span>
-                  {listing.isFeatured && (
-                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-laterite text-cream">Featured</span>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${listing.type === "SELL_HOME" ? "bg-emerald-brand text-cream" : listing.type === "SELL_LAND" ? "bg-forest text-cream" : listing.type === "RENT" ? "bg-sage text-forest" : "bg-mist text-forest border border-border"}`}>
+                      {TYPE_LABELS[listing.type] ?? listing.type}
+                    </span>
+                    {listing.isFeatured && (
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-laterite text-cream">Featured</span>
+                    )}
+                  </div>
+                  <ShareButton title={listing.title} />
                 </div>
+                {(listing.viewCount ?? 0) > 0 && (
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {listing.viewCount} view{listing.viewCount !== 1 ? "s" : ""}
+                  </p>
+                )}
 
                 <h1 className="font-display text-xl font-bold text-forest mt-3 mb-1 leading-snug">
                   {listing.title}
@@ -282,6 +301,9 @@ export default async function ListingDetailPage({ params }: Props) {
               </div>
             </div>
           </div>
+
+          {/* WhatsApp / Call sticky bar */}
+          <WhatsAppCallBar listingTitle={listing.title} />
 
           {/* Related listings */}
           {relatedPlain.length > 0 && (

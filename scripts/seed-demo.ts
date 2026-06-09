@@ -43,7 +43,9 @@ const ListingSchema = new mongoose.Schema(
     leaseTermMonths: Number,
     images: [{ url: String, publicId: String, alt: String }],
     coverIndex: { type: Number, default: 0 },
+    youtubeUrl: String,
     highlights: [String],
+    nearbyLandmarks: [String],
     viewCount: { type: Number, default: 0 },
     enquiryCount: { type: Number, default: 0 },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
@@ -65,20 +67,17 @@ const HOMES = [
   "https://images.unsplash.com/photo-1576941089067-2de3c901e126?w=800&q=80",
   "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
 ];
-
 const APARTMENTS = [
   "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80",
   "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
   "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80",
 ];
-
 const LAND = [
   "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=800&q=80",
   "https://images.unsplash.com/photo-1416331108676-a22ccb276e35?w=800&q=80",
   "https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80",
   "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80",
 ];
-
 const COMMERCIAL = [
   "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80",
   "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&q=80",
@@ -105,7 +104,15 @@ const DEMO_LISTINGS = [
     area: { value: 10, unit: "cent" }, bedrooms: 4, bathrooms: 4, furnishing: "fully-furnished", facing: "East", floors: 2, ageYears: 2,
     askingPrice: 18500000, isNegotiable: true,
     images: [h(0), h(1)],
+    youtubeUrl: "https://www.youtube.com/watch?v=fED5M_YTkm0",
     highlights: ["Swimming pool", "2-car garage", "Solar panels", "Smart home", "24×7 security"],
+    nearbyLandmarks: [
+      "Infopark IT Park – 1.2 km",
+      "SmartCity Kochi – 2.5 km",
+      "AIMS Hospital Kakkanad – 1.5 km",
+      "Lulu Mall Edappally – 4 km",
+      "Pulinchodu Metro Station – 800m",
+    ],
     viewCount: 312, enquiryCount: 14,
     geo: { type: "Point", coordinates: [76.3508, 10.0104] },
   },
@@ -119,6 +126,13 @@ const DEMO_LISTINGS = [
     askingPrice: 12500000, isNegotiable: false,
     images: [ap(0)],
     highlights: ["Backwater view", "Gym & pool", "Covered parking", "24×7 security"],
+    nearbyLandmarks: [
+      "Marine Drive Promenade – 50m",
+      "MG Road Shopping – 500m",
+      "Ernakulam Junction Railway Station – 1.2 km",
+      "KSRTC Central Bus Stand – 1 km",
+      "Lulu Mall – 3 km",
+    ],
     viewCount: 289, enquiryCount: 11,
     geo: { type: "Point", coordinates: [76.2673, 9.9816] },
   },
@@ -132,6 +146,12 @@ const DEMO_LISTINGS = [
     askingPrice: 0, monthlyRent: 28000, deposit: 168000, leaseTermMonths: 24, isNegotiable: true,
     images: [ap(1)],
     highlights: ["Backwater view", "24×7 security", "High-speed internet", "Gym"],
+    nearbyLandmarks: [
+      "Marine Drive Promenade – 50m",
+      "MG Road – 500m",
+      "Ernakulam Junction Railway Station – 1.2 km",
+      "Broadway Market – 1.5 km",
+    ],
     viewCount: 203, enquiryCount: 11,
     geo: { type: "Point", coordinates: [76.2673, 9.9816] },
   },
@@ -145,6 +165,12 @@ const DEMO_LISTINGS = [
     askingPrice: 0, monthlyRent: 16000, deposit: 48000, isNegotiable: true,
     images: [ap(2)],
     highlights: ["Near Lulu Mall", "Covered parking", "Power backup"],
+    nearbyLandmarks: [
+      "Lulu Mall – 300m",
+      "NH 544 Flyover – 200m",
+      "Edappally Metro Station – 500m",
+      "North Edappally Junction – 400m",
+    ],
     viewCount: 145, enquiryCount: 6,
     geo: { type: "Point", coordinates: [76.3117, 10.0268] },
   },
@@ -160,6 +186,13 @@ const DEMO_LISTINGS = [
     askingPrice: 0, monthlyRent: 18000, deposit: 54000, isNegotiable: true,
     images: [h(5)],
     highlights: ["Two-wheeler parking", "Generator backup", "Quiet lane", "Ground floor"],
+    nearbyLandmarks: [
+      "Pattom Junction – 300m",
+      "Govt Medical College – 1.5 km",
+      "Sree Chitra Art Gallery – 2 km",
+      "Technopark Phase 1 – 5 km",
+      "KSRTC Central Station – 3 km",
+    ],
     viewCount: 98, enquiryCount: 5,
     geo: { type: "Point", coordinates: [76.9466, 8.5241] },
   },
@@ -173,6 +206,13 @@ const DEMO_LISTINGS = [
     askingPrice: 14500000, isNegotiable: true,
     images: [h(2), h(3)],
     highlights: ["Near Raj Bhavan", "Large garden", "Double garage", "Vastu compliant"],
+    nearbyLandmarks: [
+      "Raj Bhavan – 500m",
+      "Kowdiar Junction – 300m",
+      "KIMS Hospital – 2 km",
+      "Govt Medical College – 3 km",
+      "Trivandrum Zoo & Museum – 1.5 km",
+    ],
     viewCount: 215, enquiryCount: 9,
     geo: { type: "Point", coordinates: [76.9366, 8.5120] },
   },
@@ -185,6 +225,12 @@ const DEMO_LISTINGS = [
     area: { value: 10, unit: "cent" }, askingPrice: 5500000, pricePerCent: 550000, isNegotiable: false,
     images: [la(0)],
     highlights: ["Near Technopark", "East-facing", "All-weather road", "KSEB available"],
+    nearbyLandmarks: [
+      "Technopark Phase 1 – 800m",
+      "Infosys Campus – 1.2 km",
+      "Kazhakkoottam Bus Stand – 500m",
+      "Kazhakkoottam Railway Station – 1.5 km",
+    ],
     viewCount: 132, enquiryCount: 5,
     geo: { type: "Point", coordinates: [76.8854, 8.5602] },
   },
@@ -200,6 +246,13 @@ const DEMO_LISTINGS = [
     askingPrice: 9800000, isNegotiable: false,
     images: [ap(0)],
     highlights: ["Sea-facing", "Gym & pool", "Covered parking", "Power backup"],
+    nearbyLandmarks: [
+      "Kozhikode Beach – 200m",
+      "Malabar Hospital – 1.5 km",
+      "SM Street (Mittai Theruvu) – 1 km",
+      "Kozhikode Railway Station – 3 km",
+      "KSRTC Bus Stand – 2 km",
+    ],
     viewCount: 245, enquiryCount: 9,
     geo: { type: "Point", coordinates: [75.7804, 11.2588] },
   },
@@ -212,6 +265,12 @@ const DEMO_LISTINGS = [
     area: { value: 2200, unit: "sqft" }, askingPrice: 0, monthlyRent: 80000, deposit: 960000, leaseTermMonths: 36, isNegotiable: true,
     images: [co(0)],
     highlights: ["High footfall", "Large frontage", "Two floors", "Generator backup"],
+    nearbyLandmarks: [
+      "Mavoor Road Junction – 50m",
+      "Kozhikode Railway Station – 2 km",
+      "KSRTC Bus Stand – 1.5 km",
+      "Focus Mall – 1 km",
+    ],
     viewCount: 98, enquiryCount: 4,
     geo: { type: "Point", coordinates: [75.7804, 11.2508] },
   },
@@ -224,6 +283,12 @@ const DEMO_LISTINGS = [
     area: { value: 6, unit: "cent" }, askingPrice: 2100000, pricePerCent: 350000, isNegotiable: true,
     images: [la(1)],
     highlights: ["Near Beypore port", "Corner plot", "Road frontage on two sides"],
+    nearbyLandmarks: [
+      "Beypore Beach – 300m",
+      "Beypore Port & Dry Dock – 500m",
+      "Beypore Bridge – 200m",
+      "Feroke Railway Station – 3 km",
+    ],
     viewCount: 87, enquiryCount: 3,
     geo: { type: "Point", coordinates: [75.8147, 11.1751] },
   },
@@ -238,6 +303,12 @@ const DEMO_LISTINGS = [
     area: { value: 8, unit: "cent" }, askingPrice: 3200000, pricePerCent: 400000, isNegotiable: false,
     images: [la(2)],
     highlights: ["East-facing road", "Corner plot", "KSEB connection", "Panchayat approved"],
+    nearbyLandmarks: [
+      "NH 544 – 500m",
+      "Amala Medical College – 3 km",
+      "Thrissur Town – 5 km",
+      "Ollur Panchayat Office – 600m",
+    ],
     viewCount: 134, enquiryCount: 6,
     geo: { type: "Point", coordinates: [76.1892, 10.4803] },
   },
@@ -251,6 +322,12 @@ const DEMO_LISTINGS = [
     askingPrice: 0, monthlyRent: 42000, deposit: 252000, leaseTermMonths: 36, isNegotiable: true,
     images: [h(6)],
     highlights: ["Large garden", "Separate outhouse", "Water well", "KSEB connection"],
+    nearbyLandmarks: [
+      "Divine Retreat Centre – 500m",
+      "Chalakudy River – 2 km",
+      "Chalakudy Town – 3 km",
+      "Thrissur Town – 18 km",
+    ],
     viewCount: 74, enquiryCount: 2,
     geo: { type: "Point", coordinates: [76.3375, 10.2883] },
   },
@@ -264,6 +341,12 @@ const DEMO_LISTINGS = [
     askingPrice: 7800000, isNegotiable: true,
     images: [h(3)],
     highlights: ["Near Guruvayur temple", "Ground floor", "Garage", "Compound wall"],
+    nearbyLandmarks: [
+      "Guruvayur Temple – 400m",
+      "KSRTC Bus Stand Guruvayur – 600m",
+      "Guruvayur Railway Station – 800m",
+      "Guruvayur Co-operative Hospital – 1 km",
+    ],
     viewCount: 167, enquiryCount: 8,
     geo: { type: "Point", coordinates: [76.0444, 10.5943] },
   },
@@ -278,19 +361,33 @@ const DEMO_LISTINGS = [
     area: { value: 2, unit: "acre" }, askingPrice: 4800000, isNegotiable: true,
     images: [la(3)],
     highlights: ["Coffee plantation", "Water source", "All-weather road", "Near eco-tourism zone"],
+    nearbyLandmarks: [
+      "Ambalavayal Heritage Museum – 2 km",
+      "Edakkal Caves – 5 km",
+      "Mananthavady Town – 8 km",
+      "Ambalavayal KSRTC Stop – 2 km",
+    ],
     viewCount: 189, enquiryCount: 7,
     geo: { type: "Point", coordinates: [76.1024, 11.8546] },
   },
   {
     title: "Farmhouse 3 Acres with Homestay — Kalpetta, Wayanad",
     slug: "farmhouse-3-acres-kalpetta-wayanad",
-    description: "Running eco-homestay on 3 acres of mixed plantation (rubber, pepper, cardamom). 4 guest cottages, main house, and reception area. Wayanad's booming tourism means 80%+ occupancy.",
+    description: "Running eco-homestay on 3 acres of mixed plantation (rubber, pepper, cardamom). 4 guest cottages, main house, and reception area. Wayanad's booming tourism means 80%+ occupancy. Located 3km from Kalpetta town, 8km from Chembra Peak trekking point and 12km from Wayanad Wildlife Sanctuary.",
     type: "SELL_HOME", category: "villa", isFeatured: true,
     district: "Wayanad", taluk: "Vythiri", village: "Kalpetta",
     area: { value: 3, unit: "acre" }, bedrooms: 6, bathrooms: 6, furnishing: "fully-furnished", ageYears: 8,
     askingPrice: 22000000, isNegotiable: true,
     images: [h(4), la(0)],
+    youtubeUrl: "https://www.youtube.com/watch?v=rlZBvH8gqxQ",
     highlights: ["Running homestay business", "4 guest cottages", "Mixed plantation", "80%+ occupancy"],
+    nearbyLandmarks: [
+      "Kalpetta Town – 3 km",
+      "Kalpetta KSRTC Bus Stand – 3 km",
+      "Chembra Peak Trekking Base – 8 km",
+      "Wayanad Wildlife Sanctuary – 12 km",
+      "Vythiri Village Resort – 5 km",
+    ],
     viewCount: 341, enquiryCount: 16,
     geo: { type: "Point", coordinates: [76.0817, 11.6072] },
   },
@@ -299,13 +396,21 @@ const DEMO_LISTINGS = [
   {
     title: "Heritage Tharavad 120 Years Old — Kalpathy, Palakkad",
     slug: "heritage-tharavad-palakkad",
-    description: "A rare 120-year-old traditional Kerala tharavad in pristine condition. Teakwood pillars, handcrafted nalukettu courtyard, antique doors. Mango grove on 25 cents. Perfect for heritage homestay conversion.",
+    description: "A rare 120-year-old traditional Kerala tharavad in pristine condition. Teakwood pillars, handcrafted nalukettu courtyard, antique doors. Mango grove on 25 cents. Perfect for heritage homestay conversion. Located in Kalpathy, a UNESCO-listed heritage village.",
     type: "SELL_HOME", category: "house", isFeatured: true,
     district: "Palakkad", taluk: "Palakkad", village: "Kalpathy",
     area: { value: 25, unit: "cent" }, bedrooms: 6, bathrooms: 3, ageYears: 120,
     askingPrice: 12000000, isNegotiable: true,
     images: [h(1), h(5)],
+    youtubeUrl: "https://www.youtube.com/watch?v=XVyJTHgd_as",
     highlights: ["Nalukettu layout", "Teak construction", "Mango grove", "Near Kalpathy heritage zone"],
+    nearbyLandmarks: [
+      "Kalpathy Heritage Village – 200m",
+      "Kalpathy Ratholsavam Chariot Street – 300m",
+      "Palakkad Fort – 2 km",
+      "Palakkad Junction Railway Station – 3 km",
+      "Victoria College – 2.5 km",
+    ],
     viewCount: 421, enquiryCount: 18,
     geo: { type: "Point", coordinates: [76.6552, 10.7867] },
   },
@@ -318,6 +423,11 @@ const DEMO_LISTINGS = [
     area: { value: 5, unit: "acre" }, askingPrice: 6000000, isNegotiable: true,
     images: [la(1)],
     highlights: ["Canal irrigation", "Flat terrain", "All-season cultivation", "Clear patta"],
+    nearbyLandmarks: [
+      "Chittur Town – 2 km",
+      "Nallepilly Irrigation Canal – adjacent",
+      "Chittur-Thathamangalam Govt Hospital – 3 km",
+    ],
     viewCount: 103, enquiryCount: 4,
     geo: { type: "Point", coordinates: [76.7451, 10.6922] },
   },
@@ -332,19 +442,33 @@ const DEMO_LISTINGS = [
     area: { value: 800, unit: "sqft" }, askingPrice: 0, monthlyRent: 35000, deposit: 210000, isNegotiable: true,
     images: [co(1)],
     highlights: ["30ft road frontage", "Near beach", "Power backup"],
+    nearbyLandmarks: [
+      "Alappuzha Beach – 500m",
+      "KSRTC Bus Stand – 400m",
+      "Alappuzha Railway Station – 2 km",
+      "Punnamada Boat Jetty – 1 km",
+    ],
     viewCount: 87, enquiryCount: 4,
     geo: { type: "Point", coordinates: [76.3388, 9.4981] },
   },
   {
     title: "Houseboat-Style Villa on Backwaters — Alleppey",
     slug: "backwater-villa-alleppey",
-    description: "Unique backwater-facing villa designed in traditional Kerala architecture with modern amenities. Private jetty, open deck, stunning views of the Vembanad lake. Ideal for luxury homestay or personal retreat.",
+    description: "Unique backwater-facing villa designed in traditional Kerala architecture with modern amenities. Private jetty, open deck, stunning views of the Vembanad lake. Ideal for luxury homestay or personal retreat. Set along the famous Punnamada backwaters, just 200m from the boat jetty.",
     type: "SELL_HOME", category: "villa", isFeatured: true,
     district: "Alappuzha", taluk: "Ambalapuzha", village: "Punnamada",
     area: { value: 15, unit: "cent" }, bedrooms: 3, bathrooms: 3, furnishing: "fully-furnished", ageYears: 4,
     askingPrice: 16500000, isNegotiable: false,
     images: [h(0), h(7)],
+    youtubeUrl: "https://www.youtube.com/watch?v=rNfUVttBQdE",
     highlights: ["Private backwater jetty", "Open deck", "Vembanad lake view", "Traditional Kerala architecture"],
+    nearbyLandmarks: [
+      "Punnamada Boat Jetty – 200m",
+      "Alappuzha Beach – 2 km",
+      "KSRTC Bus Stand – 3 km",
+      "Alappuzha Railway Station – 3.5 km",
+      "Nehru Trophy Boat Race Venue – 500m",
+    ],
     viewCount: 378, enquiryCount: 15,
     geo: { type: "Point", coordinates: [76.3610, 9.4906] },
   },
@@ -360,6 +484,13 @@ const DEMO_LISTINGS = [
     askingPrice: 7200000, isNegotiable: true,
     images: [ap(2)],
     highlights: ["Near medical college", "Children's play area", "Covered parking", "Rainwater harvesting"],
+    nearbyLandmarks: [
+      "Kottayam Medical College – 800m",
+      "Baker Memorial Hospital – 2 km",
+      "Kottayam Railway Station – 4 km",
+      "KSRTC Bus Stand – 3 km",
+      "CMS College – 2.5 km",
+    ],
     viewCount: 156, enquiryCount: 6,
     geo: { type: "Point", coordinates: [76.5222, 9.5916] },
   },
@@ -372,6 +503,11 @@ const DEMO_LISTINGS = [
     area: { value: 8, unit: "acre" }, askingPrice: 14000000, isNegotiable: true,
     images: [la(0)],
     highlights: ["Producing rubber estate", "Mature trees 15+ yrs", "Worker quarters", "Annual yield 2.5T"],
+    nearbyLandmarks: [
+      "Changanacherry Town – 2 km",
+      "Changanacherry Railway Station – 3 km",
+      "Changanacherry Govt Hospital – 2.5 km",
+    ],
     viewCount: 142, enquiryCount: 5,
     geo: { type: "Point", coordinates: [76.5362, 9.4458] },
   },
@@ -386,6 +522,12 @@ const DEMO_LISTINGS = [
     area: { value: 50, unit: "cent" }, askingPrice: 9500000, pricePerCent: 190000, isNegotiable: true,
     images: [la(3)],
     highlights: ["Pampa river frontage", "Eco-tourism potential", "Near Sabarimala route", "Fertile land"],
+    nearbyLandmarks: [
+      "Pampa River – adjacent",
+      "Ranni Town – 2 km",
+      "Ranni KSRTC Bus Stand – 2 km",
+      "Sabarimala Temple Route NH – 25 km",
+    ],
     viewCount: 287, enquiryCount: 12,
     geo: { type: "Point", coordinates: [76.9869, 9.3697] },
   },
@@ -400,6 +542,12 @@ const DEMO_LISTINGS = [
     area: { value: 5, unit: "cent" }, askingPrice: 2750000, pricePerCent: 550000, isNegotiable: false,
     images: [la(2)],
     highlights: ["800m from beach", "KSEB available", "Panchayat approved", "North-east corner"],
+    nearbyLandmarks: [
+      "Thottada Beach – 800m",
+      "Thalassery Town – 4 km",
+      "Thalassery Railway Station – 4 km",
+      "Thalassery Taluk Hospital – 5 km",
+    ],
     viewCount: 112, enquiryCount: 3,
     geo: { type: "Point", coordinates: [75.3698, 11.8745] },
   },
@@ -413,6 +561,13 @@ const DEMO_LISTINGS = [
     askingPrice: 8500000, isNegotiable: true,
     images: [h(6)],
     highlights: ["Near beach", "Near Brennen College", "Compound wall", "Garage"],
+    nearbyLandmarks: [
+      "Thalassery Beach – 500m",
+      "Brennen College – 800m",
+      "Thalassery Cricket Stadium – 600m",
+      "Thalassery Railway Station – 1 km",
+      "KSRTC Bus Stand – 800m",
+    ],
     viewCount: 95, enquiryCount: 4,
     geo: { type: "Point", coordinates: [75.3696, 11.7483] },
   },
@@ -427,6 +582,11 @@ const DEMO_LISTINGS = [
     area: { value: 2, unit: "acre" }, askingPrice: 3200000, isNegotiable: true,
     images: [la(1)],
     highlights: ["Good water table", "Electricity nearby", "Flat land", "Suitable for organic farming"],
+    nearbyLandmarks: [
+      "Tirur Town – 1.5 km",
+      "Tirur Railway Station – 2 km",
+      "Tirur Taluk Hospital – 2 km",
+    ],
     viewCount: 78, enquiryCount: 3,
     geo: { type: "Point", coordinates: [75.9243, 10.9129] },
   },
@@ -440,6 +600,12 @@ const DEMO_LISTINGS = [
     askingPrice: 0, monthlyRent: 14000, deposit: 42000, isNegotiable: true,
     images: [h(5)],
     highlights: ["Near Medical College", "Two-wheeler parking", "Generator"],
+    nearbyLandmarks: [
+      "Govt Medical College Manjeri – 500m",
+      "MES Medical College – 1.5 km",
+      "Manjeri Town Centre – 1 km",
+      "KSRTC Bus Stand – 800m",
+    ],
     viewCount: 112, enquiryCount: 5,
     geo: { type: "Point", coordinates: [76.1195, 11.1198] },
   },
@@ -455,6 +621,13 @@ const DEMO_LISTINGS = [
     askingPrice: 11500000, isNegotiable: false,
     images: [h(2), h(4)],
     highlights: ["Near Bekal Fort", "Partial sea view", "Landscaped garden", "Open terrace"],
+    nearbyLandmarks: [
+      "Bekal Fort – 600m",
+      "Bekal Beach – 400m",
+      "Pallikere Beach – 3 km",
+      "Bekal Hole Aqua Park – 2 km",
+      "Kasaragod Railway Station – 10 km",
+    ],
     viewCount: 198, enquiryCount: 8,
     geo: { type: "Point", coordinates: [75.0393, 12.3890] },
   },
@@ -467,6 +640,11 @@ const DEMO_LISTINGS = [
     area: { value: 10, unit: "acre" }, askingPrice: 18000000, isNegotiable: true,
     images: [la(0)],
     highlights: ["Mature coconut trees", "Worker quarters", "Well water", "Regular income"],
+    nearbyLandmarks: [
+      "Kasaragod Town – 4 km",
+      "Kasaragod Railway Station – 5 km",
+      "Govt District Hospital – 4 km",
+    ],
     viewCount: 134, enquiryCount: 5,
     geo: { type: "Point", coordinates: [74.9896, 12.5001] },
   },
@@ -475,12 +653,20 @@ const DEMO_LISTINGS = [
   {
     title: "Tea Estate 5 Acres — Munnar, Idukki",
     slug: "tea-estate-5-acres-munnar-idukki",
-    description: "A rare chance to own a 5-acre tea estate in the misty hills of Munnar at 1,600m elevation. The estate has an active tea plucking area with a processing shed. Spectacular mountain views in every direction.",
+    description: "A rare chance to own a 5-acre tea estate in the misty hills of Munnar at 1,600m elevation. The estate has an active tea plucking area with a processing shed. Spectacular mountain views in every direction. 4km from Munnar town, 8km from Eravikulam National Park.",
     type: "SELL_LAND", category: "agricultural", isFeatured: true,
     district: "Idukki", taluk: "Devikulam", village: "Munnar",
     area: { value: 5, unit: "acre" }, askingPrice: 28000000, isNegotiable: false,
     images: [la(3), la(1)],
+    youtubeUrl: "https://www.youtube.com/watch?v=xfS6ppO2Gz8",
     highlights: ["Active tea estate", "Processing shed", "Mountain views", "1600m elevation"],
+    nearbyLandmarks: [
+      "Munnar Town – 4 km",
+      "Eravikulam National Park – 8 km",
+      "Top Station Viewpoint – 12 km",
+      "Attukad Waterfalls – 3 km",
+      "Munnar Bus Stand – 4 km",
+    ],
     viewCount: 445, enquiryCount: 20,
     geo: { type: "Point", coordinates: [77.0597, 10.0889] },
   },
@@ -494,6 +680,12 @@ const DEMO_LISTINGS = [
     askingPrice: 0, monthlyRent: 45000, deposit: 135000, isNegotiable: true,
     images: [h(7)],
     highlights: ["Spice garden surroundings", "Near Periyar reserve", "Open veranda", "Barbecue area"],
+    nearbyLandmarks: [
+      "Periyar Tiger Reserve Gate – 1 km",
+      "Kumily Town – 2 km",
+      "Periyar Boat Ride Jetty – 1.5 km",
+      "Spice Market Kumily – 2 km",
+    ],
     viewCount: 178, enquiryCount: 7,
     geo: { type: "Point", coordinates: [77.1629, 9.6100] },
   },
@@ -509,6 +701,12 @@ const DEMO_LISTINGS = [
     askingPrice: 8200000, isNegotiable: true,
     images: [h(3), h(0)],
     highlights: ["Double storey", "Near NH", "School proximity", "Compound wall"],
+    nearbyLandmarks: [
+      "NH 66 – 3 km",
+      "Kollam Railway Station – 8 km",
+      "Kollam District Hospital – 7 km",
+      "Kadavoor Junction – 500m",
+    ],
     viewCount: 124, enquiryCount: 5,
     geo: { type: "Point", coordinates: [76.5918, 8.9016] },
   },
@@ -523,6 +721,12 @@ const DEMO_LISTINGS = [
     area: { value: 1800, unit: "sqft" }, askingPrice: 0, monthlyRent: 60000, deposit: 360000, isNegotiable: true,
     images: [co(0)],
     highlights: ["Round South location", "Lift access", "Power backup", "Security"],
+    nearbyLandmarks: [
+      "Vadakkumnathan Temple – 100m",
+      "Thrissur KSRTC Bus Stand – 600m",
+      "Thrissur Railway Station – 1.5 km",
+      "Sakthan Thampuran Market – 800m",
+    ],
     viewCount: 91, enquiryCount: 3,
     geo: { type: "Point", coordinates: [76.2144, 10.5276] },
   },
@@ -537,6 +741,13 @@ const DEMO_LISTINGS = [
     area: { value: 12, unit: "cent" }, askingPrice: 9600000, pricePerCent: 800000, isNegotiable: false,
     images: [la(2)],
     highlights: ["Adjacent to Metro station", "Development potential", "North-facing", "Clear title"],
+    nearbyLandmarks: [
+      "Aluva Metro Station – 100m",
+      "Aluva Railway Station – 1 km",
+      "Aluva Sivarathri Maidan – 500m",
+      "Cochin International Airport – 14 km",
+      "KSRTC Bus Stand Aluva – 800m",
+    ],
     viewCount: 267, enquiryCount: 10,
     geo: { type: "Point", coordinates: [76.3525, 10.1040] },
   },
@@ -561,17 +772,32 @@ async function main() {
   }
 
   let created = 0;
-  let skipped = 0;
+  let updated = 0;
 
   for (const data of DEMO_LISTINGS) {
     const existing = await Listing.findOne({ slug: data.slug });
-    if (existing) { skipped++; continue; }
-    await Listing.create({ ...data, createdBy: admin._id });
-    created++;
-    console.log(`  + ${data.title}`);
+    if (existing) {
+      await Listing.updateOne(
+        { slug: data.slug },
+        {
+          $set: {
+            nearbyLandmarks: data.nearbyLandmarks,
+            highlights: data.highlights,
+            description: data.description,
+            ...(data.youtubeUrl ? { youtubeUrl: data.youtubeUrl } : {}),
+          },
+        }
+      );
+      updated++;
+      console.log(`  ~ updated: ${data.title}`);
+    } else {
+      await Listing.create({ ...data, createdBy: admin._id });
+      created++;
+      console.log(`  + created: ${data.title}`);
+    }
   }
 
-  console.log(`\nDone: ${created} created, ${skipped} already existed`);
+  console.log(`\nDone: ${created} created, ${updated} updated`);
   await mongoose.disconnect();
 }
 
