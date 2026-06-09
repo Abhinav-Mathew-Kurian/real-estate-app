@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import Link from "next/link";
 import { Phone, Mail } from "lucide-react";
+import { LeadStatusDropdown } from "./LeadStatusDropdown";
 
 export const metadata: Metadata = { title: "Leads" };
 
@@ -84,8 +85,8 @@ export default async function AdminLeadsPage({
               <TableHead>Name</TableHead>
               <TableHead>Contact</TableHead>
               <TableHead>Property</TableHead>
+              <TableHead>Message</TableHead>
               <TableHead>Source</TableHead>
-              <TableHead>Campaign</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Date</TableHead>
             </TableRow>
@@ -99,7 +100,7 @@ export default async function AdminLeadsPage({
               </TableRow>
             ) : (
               leads.map((lead) => (
-                <TableRow key={lead._id.toString()} className="hover:bg-mist/30">
+                <TableRow key={lead._id.toString()} className="hover:bg-mist/30 group">
                   <TableCell className="font-medium">{lead.name}</TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-0.5">
@@ -121,24 +122,45 @@ export default async function AdminLeadsPage({
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm max-w-[180px] truncate">
-                    {(lead.listing as { title?: string; slug?: string })?.title ??
-                      lead.listingTitleSnapshot}
+                  <TableCell className="text-sm max-w-[180px]">
+                    <div className="truncate">
+                      {(() => {
+                        const listingRef = lead.listing as { title?: string; slug?: string } | undefined;
+                        return listingRef?.slug ? (
+                          <Link
+                            href={`/listing/${listingRef.slug}`}
+                            className="text-emerald-brand hover:underline"
+                            target="_blank"
+                          >
+                            {listingRef.title ?? lead.listingTitleSnapshot}
+                          </Link>
+                        ) : (
+                          lead.listingTitleSnapshot
+                        );
+                      })()}
+                    </div>
+                  </TableCell>
+                  <TableCell className="max-w-[200px]">
+                    {lead.message ? (
+                      <p className="text-xs text-muted-foreground truncate group-hover:whitespace-normal group-hover:line-clamp-3 transition-all">
+                        {lead.message}
+                      </p>
+                    ) : (
+                      <span className="text-xs text-muted-foreground/50">—</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {lead.utm?.source ?? lead.source ?? "—"}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {lead.utm?.campaign ?? "—"}
+                    <div>{lead.utm?.source ?? lead.source ?? "—"}</div>
+                    {lead.utm?.campaign && (
+                      <div className="text-muted-foreground/60">{lead.utm.campaign}</div>
+                    )}
                   </TableCell>
                   <TableCell>
-                    <span
-                      className={`inline-flex text-xs px-2 py-0.5 rounded-full border font-medium ${
-                        STATUS_STYLES[lead.status] ?? ""
-                      }`}
-                    >
-                      {lead.status}
-                    </span>
+                    <LeadStatusDropdown
+                      leadId={lead._id.toString()}
+                      currentStatus={lead.status}
+                      statusStyles={STATUS_STYLES}
+                    />
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     {formatDate(lead.createdAt)}
@@ -149,6 +171,28 @@ export default async function AdminLeadsPage({
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {total > limit && (
+        <div className="flex justify-center gap-2 mt-6">
+          {page > 1 && (
+            <Link
+              href={`/admin/leads?${searchParams.status ? `status=${searchParams.status}&` : ""}page=${page - 1}`}
+              className="px-4 py-2 rounded-lg border border-border text-sm hover:bg-mist"
+            >
+              ← Prev
+            </Link>
+          )}
+          {page * limit < total && (
+            <Link
+              href={`/admin/leads?${searchParams.status ? `status=${searchParams.status}&` : ""}page=${page + 1}`}
+              className="px-4 py-2 rounded-lg border border-border text-sm hover:bg-mist"
+            >
+              Next →
+            </Link>
+          )}
+        </div>
+      )}
     </div>
   );
 }

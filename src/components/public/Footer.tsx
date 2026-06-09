@@ -30,15 +30,15 @@ export function Footer() {
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4 group">
               <span className="w-9 h-9 rounded-lg bg-emerald-brand flex items-center justify-center text-cream font-bold text-sm">
-                KP
+                SK
               </span>
               <span className="font-display font-semibold text-xl text-cream">
-                Kerala Properties
+                Sell Kerala
               </span>
             </Link>
             <p className="text-sm leading-relaxed text-mist/70 mb-6 max-w-xs">
               Your trusted partner for premium real estate across God&rsquo;s Own Country.
-              Homes, land, villas, and commercial properties — all in one place.
+              Homes, land, villas, and commercial properties — all in one place with Sell Kerala.
             </p>
             <div className="space-y-2 text-sm">
               <a
@@ -87,7 +87,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-mist/50">
-            &copy; {new Date().getFullYear()} Kerala Properties. All rights reserved.
+            &copy; {new Date().getFullYear()} Sell Kerala. All rights reserved.
           </p>
           <div className="flex items-center gap-3">
             {["Facebook", "Instagram", "YouTube"].map((name) => (

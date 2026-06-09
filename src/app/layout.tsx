@@ -17,8 +17,8 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   title: {
-    default: "Kerala Properties – Find Your Dream Home or Land",
-    template: "%s | Kerala Properties",
+    default: "Sell Kerala – Find Your Dream Home or Land",
+    template: "%s | Sell Kerala",
   },
   description:
     "Browse premium homes, plots, villas, and land for sale, rent, and lease across Kerala. Expert local agents, transparent pricing.",

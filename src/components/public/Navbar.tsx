@@ -41,7 +41,7 @@ export function Navbar() {
           aria-label="Kerala Properties home"
         >
           <span className="w-8 h-8 rounded-lg bg-emerald-brand flex items-center justify-center text-cream font-bold text-sm">
-            KP
+            SK
           </span>
           <span
             className={cn(
@@ -49,7 +49,7 @@ export function Navbar() {
               scrolled ? "text-forest" : "text-cream"
             )}
           >
-            Kerala Properties
+            Sell Kerala
           </span>
         </Link>
 
