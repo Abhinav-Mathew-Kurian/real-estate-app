@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { connectDB } from "@/lib/db";
-import Listing from "@/models/Listing";
+import Listing from "@/lib/db/models/Listing";
 
 const intentSchema = z.object({
   type: z.enum(["SELL_HOME", "SELL_LAND", "RENT", "LEASE"]).nullable().optional(),

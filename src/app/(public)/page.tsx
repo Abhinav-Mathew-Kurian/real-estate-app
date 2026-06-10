@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { connectDB } from "@/lib/db";
-import Listing from "@/models/Listing";
+import Listing from "@/lib/db/models/Listing";
 import { KERALA_DISTRICTS } from "@/lib/geo-data";
-import { SearchBar } from "@/components/public/SearchBar";
-import { AISearchBox } from "@/components/public/AISearchBox";
-import { ListingCard } from "@/components/public/ListingCard";
-import { HeroContainer, HeroItem } from "@/components/public/HeroAnimations";
+import { SearchBar } from "@/components/search/SearchBar";
+import { AISearchBox } from "@/components/search/AISearchBox";
+import { ListingCard } from "@/components/listings/ListingCard";
+import { HeroContainer, HeroItem } from "@/components/shared/HeroAnimations";
 import {
   Home,
   Building2,
@@ -19,7 +19,7 @@ import {
   ArrowRight,
   ChevronRight,
 } from "lucide-react";
-import type { IListing } from "@/models/Listing";
+import type { IListing } from "@/lib/db/models/Listing";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

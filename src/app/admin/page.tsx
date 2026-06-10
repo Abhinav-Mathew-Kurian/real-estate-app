@@ -1,8 +1,8 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { connectDB } from "@/lib/db";
-import Listing from "@/models/Listing";
-import Lead from "@/models/Lead";
+import Listing from "@/lib/db/models/Listing";
+import Lead from "@/lib/db/models/Lead";
 import { formatINR, formatDate } from "@/lib/format";
 import { PlusCircle, Building2, Users, Eye, Star, ArrowRight } from "lucide-react";
 

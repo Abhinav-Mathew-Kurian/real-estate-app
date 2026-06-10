@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connectDB } from "@/lib/db";
-import Listing from "@/models/Listing";
+import Listing from "@/lib/db/models/Listing";
 import { ListingForm } from "@/components/admin/ListingForm";
 
 export const metadata: Metadata = { title: "Edit Listing" };

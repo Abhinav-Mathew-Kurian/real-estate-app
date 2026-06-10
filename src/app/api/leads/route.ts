@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
-import Lead from "@/models/Lead";
-import Listing from "@/models/Listing";
-import AnalyticsEvent from "@/models/AnalyticsEvent";
+import Lead from "@/lib/db/models/Lead";
+import Listing from "@/lib/db/models/Listing";
+import AnalyticsEvent from "@/lib/db/models/AnalyticsEvent";
 import { leadSchema } from "@/lib/schemas/listing";
 
 export async function GET(req: Request) {

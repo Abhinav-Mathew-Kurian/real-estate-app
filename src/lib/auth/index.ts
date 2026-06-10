@@ -2,8 +2,8 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
-import User from "@/models/User";
-import { authConfig } from "@/auth.config";
+import User from "@/lib/db/models/User";
+import { authConfig } from "@/lib/auth/config";
 
 declare module "next-auth" {
   interface User {

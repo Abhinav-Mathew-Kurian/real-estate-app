@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { SearchContent } from "./SearchContent";
-import { AISearchBox } from "@/components/public/AISearchBox";
+import { AISearchBox } from "@/components/search/AISearchBox";
 
 export const metadata: Metadata = {
   title: "Search Properties",

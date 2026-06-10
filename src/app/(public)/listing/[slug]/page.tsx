@@ -3,15 +3,15 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { connectDB } from "@/lib/db";
-import Listing from "@/models/Listing";
+import Listing from "@/lib/db/models/Listing";
 import { formatINR, formatArea } from "@/lib/format";
-import type { IListing } from "@/models/Listing";
-import { ListingCard } from "@/components/public/ListingCard";
+import type { IListing } from "@/lib/db/models/Listing";
+import { ListingCard } from "@/components/listings/ListingCard";
 import { ImageGallery } from "./ImageGallery";
 import { EnquirySection } from "./EnquirySection";
 import { PropertySection } from "./PropertySection";
-import { WhatsAppCallBar } from "@/components/public/WhatsAppCallBar";
-import { ShareButton } from "@/components/public/ShareButton";
+import { WhatsAppCallBar } from "@/components/shared/WhatsAppCallBar";
+import { ShareButton } from "@/components/shared/ShareButton";
 
 type Props = { params: Promise<{ slug: string }> };
 

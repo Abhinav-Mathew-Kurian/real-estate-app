@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { connectDB } from "@/lib/db";
-import Listing from "@/models/Listing";
-import Lead from "@/models/Lead";
+import Listing from "@/lib/db/models/Listing";
+import Lead from "@/lib/db/models/Lead";
 import { AnalyticsDashboardLoader } from "./AnalyticsDashboardLoader";
 
 export const metadata: Metadata = { title: "Analytics" };

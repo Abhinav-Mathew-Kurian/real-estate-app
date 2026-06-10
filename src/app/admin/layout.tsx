@@ -1,6 +1,6 @@
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminMobileMenu } from "@/components/admin/AdminMobileMenu";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { SessionProvider } from "next-auth/react";
 

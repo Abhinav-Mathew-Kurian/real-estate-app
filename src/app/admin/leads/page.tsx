@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { connectDB } from "@/lib/db";
-import Lead from "@/models/Lead";
+import Lead from "@/lib/db/models/Lead";
 import { formatDate } from "@/lib/format";
 import {
   Table,

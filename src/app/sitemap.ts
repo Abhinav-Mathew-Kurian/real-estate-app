@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
 import { connectDB } from "@/lib/db";
-import Listing from "@/models/Listing";
+import Listing from "@/lib/db/models/Listing";
 
 const BASE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 

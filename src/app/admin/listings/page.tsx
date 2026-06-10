@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { connectDB } from "@/lib/db";
-import Listing from "@/models/Listing";
+import Listing from "@/lib/db/models/Listing";
 import { formatINR, formatArea, formatDate } from "@/lib/format";
 import {
   Table,

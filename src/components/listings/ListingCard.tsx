@@ -5,7 +5,7 @@ import Link from "next/link";
 import { MapPin, BedDouble, Bath, Maximize2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatINR, formatArea } from "@/lib/format";
-import type { IListing } from "@/models/Listing";
+import type { IListing } from "@/lib/db/models/Listing";
 
 type ListingCardProps = {
   listing: Pick<

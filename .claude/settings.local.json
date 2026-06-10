@@ -10,7 +10,12 @@
       "Bash(pnpm build *)",
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git config *)",
+      "Bash(git mv *)",
+      "Bash(xargs sed -i 's|\"@/models/|\"@/lib/db/models/|g; s|'\\\\''@/models/|'\\\\''@/lib/db/models/|g; s|\"@/auth\"|\"@/lib/auth\"|g; s|'\\\\''@/auth'\\\\''|'\\\\''@/lib/auth'\\\\''|g; s|\"@/auth\\\\.config\"|\"@/lib/auth/config\"|g; s|'\\\\''@/auth\\\\.config'\\\\''|'\\\\''@/lib/auth/config'\\\\''|g')",
+      "Bash(xargs sed -i 's|\"@/components/public/Navbar\"|\"@/components/layout/Navbar\"|g; s|\"@/components/public/Footer\"|\"@/components/layout/Footer\"|g; s|\"@/components/public/UTMCapture\"|\"@/components/shared/UTMCapture\"|g; s|\"@/components/public/SearchBar\"|\"@/components/search/SearchBar\"|g; s|\"@/components/public/AISearchBox\"|\"@/components/search/AISearchBox\"|g; s|\"@/components/public/ListingCard\"|\"@/components/listings/ListingCard\"|g; s|\"@/components/public/EnquiryForm\"|\"@/components/listings/EnquiryForm\"|g; s|\"@/components/public/HeroAnimations\"|\"@/components/shared/HeroAnimations\"|g; s|\"@/components/public/NearbyPanel\"|\"@/components/map/NearbyPanel\"|g; s|\"@/components/public/WhatsAppCallBar\"|\"@/components/shared/WhatsAppCallBar\"|g; s|\"@/components/public/ShareButton\"|\"@/components/shared/ShareButton\"|g; s|\"@/components/public/MapView\"|\"@/components/map/MapView\"|g')"
     ]
   }
 }

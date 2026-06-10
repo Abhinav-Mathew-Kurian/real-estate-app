@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
-import Listing from "@/models/Listing";
+import Listing from "@/lib/db/models/Listing";
 import { listingSchema } from "@/lib/schemas/listing";
 import { slugify } from "@/lib/format";
 import { computePricePerCent } from "@/lib/units";

@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { LayoutGrid, Map } from "lucide-react";
 import dynamic from "next/dynamic";
-import { ListingCard } from "@/components/public/ListingCard";
-import type { IListing } from "@/models/Listing";
-import type { MultiListing } from "@/components/public/MapView";
+import { ListingCard } from "@/components/listings/ListingCard";
+import type { IListing } from "@/lib/db/models/Listing";
+import type { MultiListing } from "@/components/map/MapView";
 
 const MapView = dynamic(
-  () => import("@/components/public/MapView").then((m) => ({ default: m.MapView })),
+  () => import("@/components/map/MapView").then((m) => ({ default: m.MapView })),
   {
     ssr: false,
     loading: () => (

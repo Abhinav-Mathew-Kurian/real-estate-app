@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { connectDB } from "@/lib/db";
-import Listing from "@/models/Listing";
+import Listing from "@/lib/db/models/Listing";
 
 const TYPE_LABELS: Record<string, string> = {
   SELL_HOME: "Buy Home",
@@ -21,7 +21,7 @@ import { KERALA_DISTRICTS, TALUKS_BY_DISTRICT } from "@/lib/geo-data";
 import { SearchFilters } from "./SearchFilters";
 import { SortSelect } from "./SortSelect";
 import { SearchResultsView } from "./SearchResultsView";
-import type { IListing } from "@/models/Listing";
+import type { IListing } from "@/lib/db/models/Listing";
 
 type SearchContentProps = {
   searchParams: Record<string, string | string[] | undefined>;

@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 
 // Dynamically import map with SSR disabled
 const MapView = dynamic(
-  () => import("@/components/public/MapView").then((m) => m.MapView),
+  () => import("@/components/map/MapView").then((m) => m.MapView),
   {
     ssr: false,
     loading: () => (
