@@ -17,35 +17,43 @@ type Props = {
   address?: string;
 };
 
-export function PropertySection({
-  lat,
-  lng,
-  title,
-  landmarks,
-  village,
-  taluk,
-  district,
-  address,
-}: Props) {
+export function PropertySection({ lat, lng, title, landmarks, village, taluk, district, address }: Props) {
   const [selectedPlace, setSelectedPlace] = useState<SelectedPlace | null>(null);
 
   return (
     <>
       {/* Location card */}
-      <div className="bg-cream rounded-2xl border border-border p-6">
-        <h2 className="font-display text-xl font-semibold text-forest mb-4">Location</h2>
-        <div className="space-y-1.5 text-sm text-ink/80 mb-4">
-          <p><span className="font-medium text-ink">Village:</span> {village}</p>
-          <p><span className="font-medium text-ink">Taluk:</span> {taluk}</p>
-          <p><span className="font-medium text-ink">District:</span> {district}</p>
-          {address && <p><span className="font-medium text-ink">Address:</span> {address}</p>}
+      <div className="bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.06)] p-6">
+        <h2 className="font-display text-xl font-bold text-forest mb-4">Location</h2>
+
+        {/* Clean location info grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
+          <div className="bg-mist rounded-xl p-3">
+            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Village</div>
+            <div className="text-sm font-semibold text-ink">{village}</div>
+          </div>
+          <div className="bg-mist rounded-xl p-3">
+            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Taluk</div>
+            <div className="text-sm font-semibold text-ink">{taluk}</div>
+          </div>
+          <div className="bg-mist rounded-xl p-3">
+            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">District</div>
+            <div className="text-sm font-semibold text-ink">{district}</div>
+          </div>
+          {address && (
+            <div className="bg-mist rounded-xl p-3 col-span-2 sm:col-span-3">
+              <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Address</div>
+              <div className="text-sm font-semibold text-ink">{address}</div>
+            </div>
+          )}
         </div>
+
         <PropertyMap lat={lat} lng={lng} title={title} selectedPlace={selectedPlace} />
       </div>
 
       {/* Nearby places card */}
-      <div className="bg-cream rounded-2xl border border-border p-6">
-        <h2 className="font-display text-xl font-semibold text-forest mb-4">Nearby Places</h2>
+      <div className="bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.06)] p-6">
+        <h2 className="font-display text-xl font-bold text-forest mb-4">Nearby Places</h2>
         <NearbyPlaces
           lat={lat}
           lng={lng}

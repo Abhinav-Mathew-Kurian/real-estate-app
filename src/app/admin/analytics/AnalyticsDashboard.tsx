@@ -43,23 +43,25 @@ function StatCard({
   sub,
   icon,
   accent,
+  borderColor,
 }: {
   label: string;
   value: string | number;
   sub?: string;
   icon: React.ReactNode;
   accent?: string;
+  borderColor?: string;
 }) {
   return (
-    <div className="bg-cream rounded-2xl border border-border p-5">
+    <div className={`bg-white rounded-2xl border border-black/[0.06] border-l-4 ${borderColor ?? "border-l-gray-200"} p-5`}>
       <div className="flex items-start justify-between mb-3">
-        <span className="text-sm font-medium text-muted-foreground">{label}</span>
         <span className={`w-9 h-9 rounded-xl flex items-center justify-center ${accent ?? "bg-mist"}`}>
           {icon}
         </span>
       </div>
-      <p className="text-3xl font-bold text-ink font-display">{value.toLocaleString()}</p>
-      {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
+      <p className="text-[2.2rem] font-display font-bold text-ink leading-none tracking-tight mb-1">{typeof value === "number" ? value.toLocaleString() : value}</p>
+      <p className="text-[11px] font-bold text-ink/40 uppercase tracking-wider">{label}</p>
+      {sub && <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -69,39 +71,19 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
     <div className="space-y-8">
       {/* KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Total Views"
-          value={data.totalViews}
-          sub="Across all published listings"
-          icon={<Eye className="w-4 h-4 text-emerald-brand" />}
-          accent="bg-emerald-brand/10"
-        />
-        <StatCard
-          label="Total Leads"
-          value={data.totalLeads}
-          sub={`${data.newLeads7d} new this week`}
-          icon={<MessageSquare className="w-4 h-4 text-blue-600" />}
-          accent="bg-blue-50"
-        />
-        <StatCard
-          label="Published Listings"
-          value={data.publishedCount}
-          sub={`${data.draftCount} draft · ${data.soldCount} sold`}
-          icon={<Building2 className="w-4 h-4 text-laterite" />}
-          accent="bg-laterite/10"
-        />
-        <StatCard
-          label="Total Enquiries"
-          value={data.totalEnquiries}
-          sub="Via listing enquiry forms"
-          icon={<TrendingUp className="w-4 h-4 text-forest" />}
-          accent="bg-forest/10"
-        />
+        <StatCard label="Total Views" value={data.totalViews} sub="Across all published listings"
+          icon={<Eye className="w-4 h-4 text-emerald-brand" />} accent="bg-emerald-brand/10" borderColor="border-l-emerald-brand" />
+        <StatCard label="Total Leads" value={data.totalLeads} sub={`${data.newLeads7d} new this week`}
+          icon={<MessageSquare className="w-4 h-4 text-blue-600" />} accent="bg-blue-50" borderColor="border-l-blue-500" />
+        <StatCard label="Published Listings" value={data.publishedCount} sub={`${data.draftCount} draft · ${data.soldCount} sold`}
+          icon={<Building2 className="w-4 h-4 text-laterite" />} accent="bg-laterite/10" borderColor="border-l-laterite" />
+        <StatCard label="Total Enquiries" value={data.totalEnquiries} sub="Via listing enquiry forms"
+          icon={<TrendingUp className="w-4 h-4 text-forest" />} accent="bg-forest/10" borderColor="border-l-forest" />
       </div>
 
       {/* Daily leads chart */}
-      <div className="bg-cream rounded-2xl border border-border p-6">
-        <h2 className="text-base font-semibold text-ink mb-5">Daily Leads — Last 30 Days</h2>
+      <div className="bg-white rounded-2xl border border-black/[0.06] p-6">
+        <h2 className="text-base font-bold text-ink mb-5">Daily Leads — Last 30 Days</h2>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={data.dailyLeads} margin={{ top: 4, right: 8, bottom: 0, left: -16 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
@@ -123,8 +105,8 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
 
       {/* Leads by source + status pies */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-cream rounded-2xl border border-border p-6">
-          <h2 className="text-base font-semibold text-ink mb-5">Leads by Source</h2>
+        <div className="bg-white rounded-2xl border border-black/[0.06] p-6">
+          <h2 className="text-base font-bold text-ink mb-5">Leads by Source</h2>
           {data.leadsBySource.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-10">No lead data yet</p>
           ) : (
@@ -154,8 +136,8 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
           )}
         </div>
 
-        <div className="bg-cream rounded-2xl border border-border p-6">
-          <h2 className="text-base font-semibold text-ink mb-5">Lead Pipeline</h2>
+        <div className="bg-white rounded-2xl border border-black/[0.06] p-6">
+          <h2 className="text-base font-bold text-ink mb-5">Lead Pipeline</h2>
           {data.leadsByStatus.every((s) => s.count === 0) ? (
             <p className="text-sm text-muted-foreground text-center py-10">No lead data yet</p>
           ) : (
@@ -183,9 +165,9 @@ export function AnalyticsDashboard({ data }: { data: AnalyticsData }) {
       </div>
 
       {/* Top viewed listings */}
-      <div className="bg-cream rounded-2xl border border-border overflow-hidden">
-        <div className="px-6 py-4 border-b border-border">
-          <h2 className="text-base font-semibold text-ink">Top Viewed Listings</h2>
+      <div className="bg-white rounded-2xl border border-black/[0.06] overflow-hidden">
+        <div className="px-6 py-4 border-b border-black/[0.05]">
+          <h2 className="text-base font-bold text-ink">Top Viewed Listings</h2>
         </div>
         {data.topViewed.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-10">No published listings yet</p>

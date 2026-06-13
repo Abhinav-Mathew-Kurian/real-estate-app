@@ -56,31 +56,44 @@ ListingSchema.index({ "geo.coordinates": "2dsphere" });
 const Listing = mongoose.models.Listing ?? mongoose.model("Listing", ListingSchema);
 
 // ── Image pools ──────────────────────────────────────────────────────────────
+// Kerala-appropriate: lush homes, tropical landscapes, highlands, backwaters
 
 const HOMES = [
-  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
-  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",
-  "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80",
-  "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&q=80",
-  "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80",
-  "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=800&q=80",
-  "https://images.unsplash.com/photo-1576941089067-2de3c901e126?w=800&q=80",
-  "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80",
+  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",  // luxury villa w/ pool
+  "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&q=80",  // modern villa exterior
+  "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80",  // contemporary home
+  "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&q=80",  // elegant villa
+  "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80",  // tropical home
+  "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80",  // modern home
+  "https://images.unsplash.com/photo-1576941089067-2de3c901e126?w=800&q=80",  // house exterior
+  "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=800&q=80",  // countryside home
 ];
 const APARTMENTS = [
-  "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80",
-  "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",
-  "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80",
+  "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80",     // city apartment block
+  "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80",  // apartment interior
+  "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80",  // apartment living
 ];
 const LAND = [
-  "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=800&q=80",
-  "https://images.unsplash.com/photo-1416331108676-a22ccb276e35?w=800&q=80",
-  "https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80",
-  "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80",
+  "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=800&q=80",  // green tropical land
+  "https://images.unsplash.com/photo-1416331108676-a22ccb276e35?w=800&q=80",  // open farmland
+  "https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80",  // misty green forest
+  "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80",  // highland aerial
+  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",  // mountain lake valley
 ];
 const COMMERCIAL = [
-  "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80",
-  "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&q=80",
+  "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80",  // modern office
+  "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800&q=80",  // commercial space
+];
+// Backwater / coastal imagery for Alleppey, Kochi waterfront listings
+const BACKWATERS = [
+  "https://images.unsplash.com/photo-1544128997-7ef7d81e6de4?w=800&q=80",     // waterway / boats
+  "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800&q=80",  // Kerala canal
+];
+// Highland / plantation imagery for Wayanad, Idukki, Munnar
+const HIGHLANDS = [
+  "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80",  // highland aerial
+  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",  // mountain valley
+  "https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=80",  // misty forest
 ];
 
 function img(url: string, alt = "Property photo") {
@@ -90,6 +103,8 @@ const h = (i: number) => img(HOMES[i % HOMES.length]);
 const ap = (i: number) => img(APARTMENTS[i % APARTMENTS.length]);
 const la = (i: number) => img(LAND[i % LAND.length]);
 const co = (i: number) => img(COMMERCIAL[i % COMMERCIAL.length]);
+const bw = (i: number) => img(BACKWATERS[i % BACKWATERS.length]);
+const hl = (i: number) => img(HIGHLANDS[i % HIGHLANDS.length]);
 
 // ── Listings ──────────────────────────────────────────────────────────────────
 
@@ -359,7 +374,7 @@ const DEMO_LISTINGS = [
     type: "SELL_LAND", category: "agricultural", isFeatured: true,
     district: "Wayanad", taluk: "Mananthavady", village: "Ambalavayal",
     area: { value: 2, unit: "acre" }, askingPrice: 4800000, isNegotiable: true,
-    images: [la(3)],
+    images: [hl(2), hl(0)],
     highlights: ["Coffee plantation", "Water source", "All-weather road", "Near eco-tourism zone"],
     nearbyLandmarks: [
       "Ambalavayal Heritage Museum – 2 km",
@@ -378,7 +393,7 @@ const DEMO_LISTINGS = [
     district: "Wayanad", taluk: "Vythiri", village: "Kalpetta",
     area: { value: 3, unit: "acre" }, bedrooms: 6, bathrooms: 6, furnishing: "fully-furnished", ageYears: 8,
     askingPrice: 22000000, isNegotiable: true,
-    images: [h(4), la(0)],
+    images: [hl(0), hl(2), h(4)],
     youtubeUrl: "https://www.youtube.com/watch?v=rlZBvH8gqxQ",
     highlights: ["Running homestay business", "4 guest cottages", "Mixed plantation", "80%+ occupancy"],
     nearbyLandmarks: [
@@ -459,7 +474,7 @@ const DEMO_LISTINGS = [
     district: "Alappuzha", taluk: "Ambalapuzha", village: "Punnamada",
     area: { value: 15, unit: "cent" }, bedrooms: 3, bathrooms: 3, furnishing: "fully-furnished", ageYears: 4,
     askingPrice: 16500000, isNegotiable: false,
-    images: [h(0), h(7)],
+    images: [bw(0), bw(1), h(0)],
     youtubeUrl: "https://www.youtube.com/watch?v=rNfUVttBQdE",
     highlights: ["Private backwater jetty", "Open deck", "Vembanad lake view", "Traditional Kerala architecture"],
     nearbyLandmarks: [
@@ -657,7 +672,7 @@ const DEMO_LISTINGS = [
     type: "SELL_LAND", category: "agricultural", isFeatured: true,
     district: "Idukki", taluk: "Devikulam", village: "Munnar",
     area: { value: 5, unit: "acre" }, askingPrice: 28000000, isNegotiable: false,
-    images: [la(3), la(1)],
+    images: [hl(1), hl(0), la(0)],
     youtubeUrl: "https://www.youtube.com/watch?v=xfS6ppO2Gz8",
     highlights: ["Active tea estate", "Processing shed", "Mountain views", "1600m elevation"],
     nearbyLandmarks: [

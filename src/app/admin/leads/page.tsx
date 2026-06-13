@@ -2,25 +2,31 @@ import { Metadata } from "next";
 import { connectDB } from "@/lib/db";
 import Lead from "@/lib/db/models/Lead";
 import { formatDate } from "@/lib/format";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import Link from "next/link";
-import { Phone, Mail } from "lucide-react";
+import { Phone, Mail, MessageSquare, ExternalLink } from "lucide-react";
 import { LeadStatusDropdown } from "./LeadStatusDropdown";
 
 export const metadata: Metadata = { title: "Leads" };
 
 const STATUS_STYLES: Record<string, string> = {
-  new: "bg-blue-50 text-blue-700 border-blue-200",
-  contacted: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  closed: "bg-green-50 text-green-700 border-green-200",
+  new:       "bg-blue-50 text-blue-700 border-blue-200",
+  contacted: "bg-amber-50 text-amber-700 border-amber-200",
+  closed:    "bg-emerald-50 text-emerald-700 border-emerald-200",
 };
+
+const STATUS_BORDER: Record<string, string> = {
+  new:       "border-l-blue-400",
+  contacted: "border-l-amber-400",
+  closed:    "border-l-emerald-500",
+};
+
+const AVATAR_BG = [
+  "bg-forest/15 text-forest",
+  "bg-blue-100 text-blue-700",
+  "bg-laterite/15 text-laterite",
+  "bg-purple-100 text-purple-700",
+  "bg-amber-100 text-amber-700",
+];
 
 export default async function AdminLeadsPage(props: {
   searchParams: Promise<{ status?: string; page?: string }>;
@@ -29,167 +35,189 @@ export default async function AdminLeadsPage(props: {
   await connectDB();
 
   const page = Math.max(1, parseInt(searchParams.page ?? "1"));
-  const limit = 20;
+  const limit = 18;
   const filter: Record<string, unknown> = {};
   if (searchParams.status) filter.status = searchParams.status;
 
-  const [leads, total] = await Promise.all([
-    Lead.find(filter)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .populate("listing", "title slug")
-      .lean(),
+  const [leads, total, newCount, contactedCount, closedCount] = await Promise.all([
+    Lead.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).populate("listing", "title slug").lean(),
     Lead.countDocuments(filter),
+    Lead.countDocuments({ status: "new" }),
+    Lead.countDocuments({ status: "contacted" }),
+    Lead.countDocuments({ status: "closed" }),
   ]);
 
+  const totalPages = Math.ceil(total / limit);
+
+  const FILTERS = [
+    { label: "All",       value: "",          count: newCount + contactedCount + closedCount },
+    { label: "New",       value: "new",        count: newCount },
+    { label: "Contacted", value: "contacted",  count: contactedCount },
+    { label: "Closed",    value: "closed",     count: closedCount },
+  ];
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-display font-semibold text-forest">Leads</h1>
-          <p className="text-sm text-muted-foreground mt-1">{total} total enquiries</p>
-        </div>
+    <div className="space-y-6 max-w-6xl">
+
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-display font-bold text-ink tracking-tight">Leads</h1>
+        <p className="text-sm text-muted-foreground mt-1">{total} total enquir{total === 1 ? "y" : "ies"}</p>
       </div>
 
-      {/* Status filters */}
-      <div className="flex gap-2 mb-4">
+      {/* Pipeline summary */}
+      <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "All", value: "" },
-          { label: "New", value: "new" },
-          { label: "Contacted", value: "contacted" },
-          { label: "Closed", value: "closed" },
-        ].map((f) => {
+          { label: "New", count: newCount,        bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200",   dot: "bg-blue-500" },
+          { label: "Contacted", count: contactedCount, bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200",  dot: "bg-amber-400" },
+          { label: "Closed", count: closedCount,     bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", dot: "bg-emerald-500" },
+        ].map((s) => (
+          <Link
+            key={s.label}
+            href={`/admin/leads?status=${s.label.toLowerCase()}`}
+            className={`${s.bg} ${s.border} border rounded-xl p-4 hover:opacity-80 transition-opacity cursor-pointer`}
+          >
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${s.dot} shrink-0`} />
+              <span className={`text-xs font-bold uppercase tracking-wider ${s.text}`}>{s.label}</span>
+            </div>
+            <p className={`text-3xl font-display font-bold mt-2 ${s.text}`}>{s.count}</p>
+          </Link>
+        ))}
+      </div>
+
+      {/* Filter tabs */}
+      <div className="flex gap-2 flex-wrap">
+        {FILTERS.map((f) => {
           const isActive = f.value === (searchParams.status ?? "");
           return (
             <Link
               key={f.label}
               href={`/admin/leads${f.value ? `?status=${f.value}` : ""}`}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
                 isActive
-                  ? "bg-emerald-brand text-cream"
-                  : "bg-mist border border-border text-muted-foreground hover:text-ink"
+                  ? "bg-forest text-cream shadow-sm"
+                  : "bg-white border border-border/60 text-muted-foreground hover:text-ink hover:border-border"
               }`}
             >
               {f.label}
+              <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${isActive ? "bg-white/20 text-cream" : "bg-black/5 text-ink/50"}`}>
+                {f.count}
+              </span>
             </Link>
           );
         })}
       </div>
 
-      <div className="bg-cream rounded-2xl border border-border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-mist/50">
-              <TableHead>Name</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Property</TableHead>
-              <TableHead>Message</TableHead>
-              <TableHead>Source</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {leads.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
-                  No leads yet.
-                </TableCell>
-              </TableRow>
-            ) : (
-              leads.map((lead) => (
-                <TableRow key={lead._id.toString()} className="hover:bg-mist/30 group">
-                  <TableCell className="font-medium">{lead.name}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-0.5">
-                      <a
-                        href={`tel:${lead.phone}`}
-                        className="flex items-center gap-1 text-xs text-emerald-brand hover:underline"
+      {/* Lead cards grid */}
+      {leads.length === 0 ? (
+        <div className="py-24 text-center bg-white rounded-2xl border border-black/[0.06]">
+          <MessageSquare className="w-10 h-10 text-muted-foreground/30 mx-auto mb-4" />
+          <p className="text-sm font-semibold text-ink mb-1">No leads yet</p>
+          <p className="text-sm text-muted-foreground">Enquiries from your listings will appear here.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {leads.map((lead, idx) => {
+            const avatarCls = AVATAR_BG[idx % AVATAR_BG.length];
+            const borderCls = STATUS_BORDER[lead.status] ?? "border-l-gray-300";
+            const listingRef = lead.listing as { title?: string; slug?: string } | undefined;
+
+            return (
+              <div
+                key={lead._id.toString()}
+                className={`bg-white rounded-2xl border border-black/[0.06] border-l-4 ${borderCls} p-5 flex flex-col gap-4`}
+              >
+                {/* Top: avatar + name + date + badge */}
+                <div className="flex items-start gap-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-bold text-sm ${avatarCls}`}>
+                    {lead.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-bold text-ink text-sm leading-tight">{lead.name}</p>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border capitalize shrink-0 ${STATUS_STYLES[lead.status] ?? ""}`}>
+                        {lead.status}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{formatDate(lead.createdAt)}</p>
+                  </div>
+                </div>
+
+                {/* Contact actions */}
+                <div className="flex gap-2">
+                  <a
+                    href={`tel:${lead.phone}`}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-emerald-brand/8 hover:bg-emerald-brand/15 text-emerald-brand text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    {lead.phone}
+                  </a>
+                  {lead.email && (
+                    <a
+                      href={`mailto:${lead.email}`}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+
+                {/* Property */}
+                {(listingRef?.title || lead.listingTitleSnapshot) && (
+                  <div className="px-3 py-2 bg-[#F4F6F3] rounded-xl">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Property</p>
+                    {listingRef?.slug ? (
+                      <Link
+                        href={`/listing/${listingRef.slug}`}
+                        target="_blank"
+                        className="flex items-center gap-1 text-xs font-semibold text-emerald-brand hover:underline cursor-pointer"
                       >
-                        <Phone className="w-3 h-3" />
-                        {lead.phone}
-                      </a>
-                      {lead.email && (
-                        <a
-                          href={`mailto:${lead.email}`}
-                          className="flex items-center gap-1 text-xs text-muted-foreground hover:underline"
-                        >
-                          <Mail className="w-3 h-3" />
-                          {lead.email}
-                        </a>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm max-w-[180px]">
-                    <div className="truncate">
-                      {(() => {
-                        const listingRef = lead.listing as { title?: string; slug?: string } | undefined;
-                        return listingRef?.slug ? (
-                          <Link
-                            href={`/listing/${listingRef.slug}`}
-                            className="text-emerald-brand hover:underline"
-                            target="_blank"
-                          >
-                            {listingRef.title ?? lead.listingTitleSnapshot}
-                          </Link>
-                        ) : (
-                          lead.listingTitleSnapshot
-                        );
-                      })()}
-                    </div>
-                  </TableCell>
-                  <TableCell className="max-w-[200px]">
-                    {lead.message ? (
-                      <p className="text-xs text-muted-foreground truncate group-hover:whitespace-normal group-hover:line-clamp-3 transition-all">
-                        {lead.message}
-                      </p>
+                        <span className="truncate">{listingRef.title ?? lead.listingTitleSnapshot}</span>
+                        <ExternalLink className="w-3 h-3 shrink-0" />
+                      </Link>
                     ) : (
-                      <span className="text-xs text-muted-foreground/50">—</span>
+                      <p className="text-xs text-ink/70 truncate">{lead.listingTitleSnapshot}</p>
                     )}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    <div>{lead.utm?.source ?? lead.source ?? "—"}</div>
-                    {lead.utm?.campaign && (
-                      <div className="text-muted-foreground/60">{lead.utm.campaign}</div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <LeadStatusDropdown
-                      leadId={lead._id.toString()}
-                      currentStatus={lead.status}
-                      statusStyles={STATUS_STYLES}
-                    />
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {formatDate(lead.createdAt)}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                  </div>
+                )}
+
+                {/* Message */}
+                {lead.message && (
+                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 border-t border-black/[0.04] pt-3">
+                    &ldquo;{lead.message}&rdquo;
+                  </p>
+                )}
+
+                {/* Status change */}
+                <div className="border-t border-black/[0.04] pt-3">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Update Status</p>
+                  <LeadStatusDropdown leadId={lead._id.toString()} currentStatus={lead.status} statusStyles={STATUS_STYLES} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Pagination */}
-      {total > limit && (
-        <div className="flex justify-center gap-2 mt-6">
-          {page > 1 && (
-            <Link
-              href={`/admin/leads?${searchParams.status ? `status=${searchParams.status}&` : ""}page=${page - 1}`}
-              className="px-4 py-2 rounded-lg border border-border text-sm hover:bg-mist"
-            >
-              ← Prev
-            </Link>
-          )}
-          {page * limit < total && (
-            <Link
-              href={`/admin/leads?${searchParams.status ? `status=${searchParams.status}&` : ""}page=${page + 1}`}
-              className="px-4 py-2 rounded-lg border border-border text-sm hover:bg-mist"
-            >
-              Next →
-            </Link>
-          )}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">Page {page} of {totalPages} · {total} leads</p>
+          <div className="flex gap-2">
+            {page > 1 && (
+              <Link href={`/admin/leads?${searchParams.status ? `status=${searchParams.status}&` : ""}page=${page - 1}`}
+                className="px-4 py-2 rounded-xl border border-border/60 bg-white text-sm hover:bg-mist transition-colors cursor-pointer">
+                ← Prev
+              </Link>
+            )}
+            {page < totalPages && (
+              <Link href={`/admin/leads?${searchParams.status ? `status=${searchParams.status}&` : ""}page=${page + 1}`}
+                className="px-4 py-2 rounded-xl border border-border/60 bg-white text-sm hover:bg-mist transition-colors cursor-pointer">
+                Next →
+              </Link>
+            )}
+          </div>
         </div>
       )}
     </div>

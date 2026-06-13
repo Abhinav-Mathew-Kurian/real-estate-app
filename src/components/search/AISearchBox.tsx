@@ -7,12 +7,15 @@ import { Sparkles, Search, Loader2, AlertCircle } from "lucide-react";
 type AISearchBoxProps = {
   placeholder?: string;
   className?: string;
+  variant?: "hero" | "page";
 };
 
 export function AISearchBox({
   placeholder = "Describe what you're looking for… e.g. '3 BHK villa in Kochi under 1 crore near school'",
   className = "",
+  variant = "hero",
 }: AISearchBoxProps) {
+  const onLight = variant === "page";
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -98,7 +101,7 @@ export function AISearchBox({
 
         {/* Status hint */}
         {loading && (
-          <div className="absolute -bottom-8 left-0 right-0 flex items-center justify-center gap-1.5 text-[11px] text-cream/70">
+          <div className={`absolute -bottom-8 left-0 right-0 flex items-center justify-center gap-1.5 text-[11px] ${onLight ? "text-muted-foreground" : "text-cream/70"}`}>
             <Sparkles className="w-3 h-3 animate-pulse" />
             AI is analyzing your query…
           </div>
@@ -106,13 +109,13 @@ export function AISearchBox({
       </form>
 
       {!loading && status === "idle" && (
-        <p className="mt-2 text-[11px] text-cream/40 text-center">
+        <p className={`mt-2 text-[11px] text-center ${onLight ? "text-muted-foreground/70" : "text-cream/40"}`}>
           Try: &ldquo;3 BHK flat in Thrissur under 60 lakhs&rdquo; · &ldquo;land near beach in Kozhikode&rdquo;
         </p>
       )}
 
       {status === "error" && (
-        <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-red-400">
+        <div className={`mt-2 flex items-center justify-center gap-1.5 text-xs ${onLight ? "text-red-600" : "text-red-400"}`}>
           <AlertCircle className="w-3.5 h-3.5" />
           Search failed. Please try again.
         </div>

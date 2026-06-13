@@ -70,6 +70,7 @@ function OverpassResults({ lat, lng, onSelectPlace, selectedPlace }: OverpassRes
   const [results, setResults] = useState<CategoryResult[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,7 +103,7 @@ function OverpassResults({ lat, lng, onSelectPlace, selectedPlace }: OverpassRes
     }
     void load();
     return () => { cancelled = true; };
-  }, [lat, lng]);
+  }, [lat, lng, attempt]);
 
   if (loading) {
     return (
@@ -115,18 +116,36 @@ function OverpassResults({ lat, lng, onSelectPlace, selectedPlace }: OverpassRes
 
   if (failed) {
     return (
-      <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 px-3 py-2.5 rounded-xl border border-amber-200">
-        <AlertCircle className="w-4 h-4 shrink-0" />
-        Could not load nearby places right now. Try refreshing.
+      <div className="flex items-center justify-between gap-3 text-sm text-amber-700 bg-amber-50 px-3 py-2.5 rounded-xl border border-amber-200">
+        <div className="flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          Could not load nearby places. Check connection.
+        </div>
+        <button
+          type="button"
+          onClick={() => setAttempt((n) => n + 1)}
+          className="text-xs font-semibold text-amber-800 underline underline-offset-2 cursor-pointer shrink-0"
+        >
+          Retry
+        </button>
       </div>
     );
   }
 
   if (!results || results.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground py-2">
-        No nearby places found in map data for this area.
-      </p>
+      <div className="py-3 flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          No nearby places found in OpenStreetMap for this area.
+        </p>
+        <button
+          type="button"
+          onClick={() => { setResults(null); setAttempt((n) => n + 1); }}
+          className="text-xs font-medium text-emerald-brand hover:text-forest underline underline-offset-2 cursor-pointer shrink-0 transition-colors"
+        >
+          Retry
+        </button>
+      </div>
     );
   }
 

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { Metadata } from "next";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
 import { ContactForm } from "./ContactForm";
@@ -36,10 +37,18 @@ const CONTACT_INFO = [
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-mist pt-16">
+    <div className="min-h-screen bg-mist pt-28">
       {/* Hero */}
-      <section className="bg-forest py-16 px-4">
-        <div className="max-w-3xl mx-auto text-center">
+      <section className="relative bg-forest py-16 px-4 overflow-hidden">
+        <Image
+          src="https://images.unsplash.com/photo-1416331108676-a22ccb276e35?w=1920&q=60"
+          alt=""
+          fill
+          className="object-cover opacity-10"
+          aria-hidden="true"
+          sizes="100vw"
+        />
+        <div className="relative z-10 max-w-3xl mx-auto text-center">
           <h1 className="font-display text-4xl font-bold text-cream mb-4">Contact Us</h1>
           <p className="text-mist/80 text-lg">
             Have a question or want to discuss a property? We&apos;d love to hear from you.

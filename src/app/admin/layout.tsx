@@ -9,11 +9,7 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session) redirect("/auth/login");
 
@@ -26,27 +22,28 @@ export default async function AdminLayout({
 
   return (
     <SessionProvider session={session}>
-      <div className="flex min-h-screen bg-[#F4F6F5]">
+      {/* h-screen + overflow-hidden: sidebar never stretches past viewport */}
+      <div className="flex h-screen overflow-hidden bg-[#F0F2EF]">
         <AdminSidebar />
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          {/* Top bar */}
-          <header className="h-14 bg-cream/90 backdrop-blur border-b border-border flex items-center px-4 sm:px-6 gap-3 sticky top-0 z-10">
+
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Topbar */}
+          <header className="h-14 bg-white border-b border-black/[0.07] flex items-center px-5 sm:px-7 gap-3 shrink-0">
             <AdminMobileMenu />
             <div className="flex-1" />
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-forest/12 flex items-center justify-center shrink-0">
-                <span className="text-xs font-bold text-forest">{initials}</span>
-              </div>
-              <div className="hidden sm:block">
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:block text-right">
                 <p className="text-sm font-semibold text-ink leading-none">{session.user?.name}</p>
-                <p className="text-[11px] text-muted-foreground capitalize mt-0.5">
-                  {session.user?.role ?? "admin"}
-                </p>
+                <p className="text-[11px] text-muted-foreground capitalize mt-0.5">{session.user?.role ?? "admin"}</p>
+              </div>
+              <div className="w-8 h-8 rounded-lg bg-forest flex items-center justify-center shrink-0">
+                <span className="text-[11px] font-bold text-cream">{initials}</span>
               </div>
             </div>
           </header>
 
-          <main className="flex-1 p-6 overflow-auto">{children}</main>
+          {/* Scrollable content area */}
+          <main className="flex-1 overflow-y-auto p-5 sm:p-8">{children}</main>
         </div>
       </div>
     </SessionProvider>

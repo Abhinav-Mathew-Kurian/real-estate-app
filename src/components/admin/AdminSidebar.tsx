@@ -19,8 +19,8 @@ const NAV = [
   {
     section: "MANAGE",
     items: [
-      { href: "/admin",            label: "Dashboard",   icon: LayoutDashboard, exact: true },
-      { href: "/admin/listings",   label: "Listings",    icon: ListFilter,      strictPrefix: true },
+      { href: "/admin",              label: "Dashboard",   icon: LayoutDashboard, exact: true },
+      { href: "/admin/listings",     label: "Listings",    icon: ListFilter,      strictPrefix: true },
       { href: "/admin/listings/new", label: "Add Listing", icon: PlusCircle },
     ],
   },
@@ -54,23 +54,23 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex flex-col h-full">
       {/* Brand */}
-      <div className="h-14 flex items-center px-4 border-b border-white/8 shrink-0">
-        <Link href="/" className="flex items-center gap-2.5" onClick={onNavigate}>
-          <span className="w-8 h-8 rounded-xl bg-emerald-brand flex items-center justify-center font-bold text-cream text-sm tracking-tight shrink-0">
+      <div className="h-[60px] flex items-center px-5 border-b border-white/5 shrink-0">
+        <Link href="/" className="flex items-center gap-2.5 cursor-pointer" onClick={onNavigate}>
+          <div className="w-7 h-7 rounded-lg bg-emerald-brand flex items-center justify-center font-bold text-cream text-xs shrink-0">
             SK
-          </span>
-          <div>
-            <p className="font-display font-bold text-cream text-sm leading-none">Sell Kerala</p>
-            <p className="text-cream/35 text-[10px] mt-0.5">Admin Panel</p>
+          </div>
+          <div className="flex flex-col leading-none">
+            <p className="font-display font-bold text-white text-sm leading-none tracking-tight">Sell Kerala</p>
+            <p className="text-white/25 text-[9px] mt-0.5 tracking-wider uppercase">Admin</p>
           </div>
         </Link>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-2.5 py-5 space-y-5 overflow-y-auto" aria-label="Admin navigation">
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-5 space-y-6 overflow-y-auto" aria-label="Admin navigation">
         {NAV.map(({ section, items }) => (
           <div key={section}>
-            <p className="text-[9px] font-bold text-cream/25 tracking-[0.14em] uppercase px-3 mb-1.5">
+            <p className="text-[9px] font-bold text-white/20 tracking-[0.16em] uppercase px-3 mb-2">
               {section}
             </p>
             <div className="space-y-0.5">
@@ -86,17 +86,17 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                     onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "group flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                      "group flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer",
                       active
-                        ? "bg-emerald-brand text-cream shadow-sm"
-                        : "text-cream/55 hover:text-cream hover:bg-white/8"
+                        ? "bg-white/12 text-white"
+                        : "text-white/45 hover:text-white hover:bg-white/6"
                     )}
                   >
                     <span className="flex items-center gap-2.5">
-                      <item.icon className="w-4 h-4 shrink-0" />
+                      <item.icon className={cn("w-4 h-4 shrink-0", active ? "text-sage" : "text-white/30 group-hover:text-white/60")} />
                       {item.label}
                     </span>
-                    {active && <ChevronRight className="w-3.5 h-3.5 opacity-60" />}
+                    {active && <ChevronRight className="w-3 h-3 text-white/30" />}
                   </Link>
                 );
               })}
@@ -106,18 +106,18 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       {/* Bottom */}
-      <div className="px-2.5 py-3 border-t border-white/8 space-y-0.5 shrink-0">
+      <div className="px-3 py-3 border-t border-white/5 space-y-0.5 shrink-0">
         <Link
           href="/"
           target="_blank"
-          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-cream/55 hover:text-cream hover:bg-white/8 transition-all"
+          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-white/35 hover:text-white hover:bg-white/6 transition-all cursor-pointer"
         >
           <Home className="w-4 h-4 shrink-0" />
           View Site
         </Link>
         <button
           onClick={() => signOut({ callbackUrl: "/auth/login" })}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-cream/55 hover:text-cream hover:bg-white/8 transition-all"
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-white/35 hover:text-white hover:bg-white/6 transition-all cursor-pointer"
         >
           <LogOut className="w-4 h-4 shrink-0" />
           Sign Out
@@ -129,7 +129,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AdminSidebar() {
   return (
-    <aside className="hidden lg:flex flex-col w-60 min-h-screen bg-forest shrink-0">
+    <aside className="hidden lg:flex flex-col w-[230px] h-full bg-[#0F1612] shrink-0">
       <SidebarContent />
     </aside>
   );

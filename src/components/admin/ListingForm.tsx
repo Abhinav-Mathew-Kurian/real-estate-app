@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm, useWatch, useFieldArray } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { listingSchema, type ListingFormData } from "@/lib/schemas/listing";
 import { KERALA_DISTRICTS, TALUKS_BY_DISTRICT } from "@/lib/geo-data";
@@ -10,7 +10,6 @@ import { getCloudinarySignature, getYoutubeEmbedUrl } from "@/lib/cloudinary";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -29,8 +28,6 @@ import {
   Loader2,
   X,
   Plus,
-  GripVertical,
-  Trash2,
   Upload,
   CheckCircle,
   AlertCircle,
@@ -39,7 +36,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import dynamic from "next/dynamic";
@@ -346,56 +343,57 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit((d) => onSubmit(d))} className="space-y-8">
-      {saveError && (
-        <div className="flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-          <AlertCircle className="w-4 h-4 shrink-0" />
-          {saveError}
-        </div>
-      )}
-
+    <form onSubmit={handleSubmit((d) => onSubmit(d))} className="space-y-6 pb-4">
       {/* ── Type & Category ── */}
       <Section title="Listing Type" icon={<Home className="w-4 h-4" />}>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Type" error={errors.type?.message}>
-            <Select
-              value={watch("type")}
-              onValueChange={(v) =>
-                setValue("type", v as ListingFormData["type"])
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {LISTING_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
+        <div className="space-y-4">
+          <div>
+            <p className="text-xs font-semibold text-ink/50 uppercase tracking-wider mb-2">Type *</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {LISTING_TYPES.map((t) => {
+                const active = watch("type") === t.value;
+                return (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => setValue("type", t.value as ListingFormData["type"])}
+                    className={`py-2.5 px-3 rounded-xl text-sm font-semibold border-2 transition-all cursor-pointer text-center ${
+                      active
+                        ? "bg-forest text-cream border-forest shadow-sm"
+                        : "bg-white text-ink/60 border-border hover:border-forest/40 hover:text-ink"
+                    }`}
+                  >
                     {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
+                  </button>
+                );
+              })}
+            </div>
+            {errors.type && <p className="text-xs text-red-600 mt-1">{errors.type.message}</p>}
+          </div>
 
-          <Field label="Category" error={errors.category?.message}>
-            <Select
-              value={watch("category")}
-              onValueChange={(v) =>
-                setValue("category", v as ListingFormData["category"])
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map((c) => (
-                  <SelectItem key={c.value} value={c.value}>
+          <div>
+            <p className="text-xs font-semibold text-ink/50 uppercase tracking-wider mb-2">Category *</p>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIES.map((c) => {
+                const active = watch("category") === c.value;
+                return (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => setValue("category", c.value as ListingFormData["category"])}
+                    className={`py-1.5 px-4 rounded-full text-sm font-medium border-2 transition-all cursor-pointer ${
+                      active
+                        ? "bg-emerald-brand text-cream border-emerald-brand shadow-sm"
+                        : "bg-white text-ink/60 border-border hover:border-emerald-brand/40 hover:text-ink"
+                    }`}
+                  >
                     {c.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
+                  </button>
+                );
+              })}
+            </div>
+            {errors.category && <p className="text-xs text-red-600 mt-1">{errors.category.message}</p>}
+          </div>
         </div>
 
         <Field label="Title *" error={errors.title?.message}>
@@ -565,23 +563,28 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
           <Field label="Area *" error={errors.areaValue?.message} className="col-span-2">
             <Input {...register("areaValue")} type="number" step="any" placeholder="e.g. 25" />
           </Field>
-          <Field label="Unit *" error={errors.areaUnit?.message}>
-            <Select
-              value={watch("areaUnit")}
-              onValueChange={(v) =>
-                setValue("areaUnit", v as ListingFormData["areaUnit"])
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cent">Cent</SelectItem>
-                <SelectItem value="acre">Acre</SelectItem>
-                <SelectItem value="sqft">Sq ft</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
+          <div>
+            <p className="text-xs font-medium text-ink/60 mb-1.5">Unit *</p>
+            <div className="flex gap-1.5">
+              {(["cent", "acre", "sqft"] as const).map((u) => {
+                const label = u === "sqft" ? "Sq ft" : u.charAt(0).toUpperCase() + u.slice(1);
+                const active = watch("areaUnit") === u;
+                return (
+                  <button
+                    key={u}
+                    type="button"
+                    onClick={() => setValue("areaUnit", u)}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold border-2 transition-all cursor-pointer ${
+                      active ? "bg-forest text-cream border-forest" : "bg-white text-ink/60 border-border hover:border-forest/40"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+            {errors.areaUnit && <p className="text-xs text-red-600 mt-1">{errors.areaUnit.message}</p>}
+          </div>
         </div>
 
         {(isHome || isRent || isLease) && (
@@ -596,48 +599,58 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
         )}
 
         {(isRent || isLease) && (
-          <Field label="Furnishing">
-            <Select
-              value={watch("furnishing") ?? ""}
-              onValueChange={(v) => setValue("furnishing", v ?? undefined)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select furnishing" />
-              </SelectTrigger>
-              <SelectContent>
-                {FURNISHINGS.map((f) => (
-                  <SelectItem key={f} value={f}>{f}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
+          <div>
+            <p className="text-xs font-medium text-ink/60 mb-1.5">Furnishing</p>
+            <div className="flex gap-2">
+              {FURNISHINGS.map((f) => {
+                const active = watch("furnishing") === f;
+                return (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setValue("furnishing", active ? undefined : f)}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold border-2 transition-all cursor-pointer ${
+                      active ? "bg-emerald-brand text-cream border-emerald-brand" : "bg-white text-ink/60 border-border hover:border-emerald-brand/40"
+                    }`}
+                  >
+                    {f}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         )}
 
-        <div className="grid grid-cols-3 gap-4">
-          <Field label="Facing">
-            <Select
-              value={watch("facing") ?? ""}
-              onValueChange={(v) => setValue("facing", v ?? undefined)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Facing" />
-              </SelectTrigger>
-              <SelectContent>
-                {FACINGS.map((f) => (
-                  <SelectItem key={f} value={f}>{f}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
+        <div className="space-y-4">
+          <div>
+            <p className="text-xs font-medium text-ink/60 mb-1.5">Facing</p>
+            <div className="grid grid-cols-4 gap-1.5">
+              {FACINGS.map((f) => {
+                const active = watch("facing") === f;
+                return (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setValue("facing", active ? undefined : f)}
+                    className={`py-1.5 rounded-lg text-xs font-semibold border-2 transition-all cursor-pointer ${
+                      active ? "bg-forest text-cream border-forest" : "bg-white text-ink/60 border-border hover:border-forest/40"
+                    }`}
+                  >
+                    {f}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           {(isHome || isRent || isLease) && (
-            <>
+            <div className="grid grid-cols-2 gap-4">
               <Field label="Floors">
                 <Input {...register("floors")} type="number" min="0" placeholder="e.g. 2" />
               </Field>
               <Field label="Age (years)">
                 <Input {...register("ageYears")} type="number" min="0" placeholder="e.g. 5" />
               </Field>
-            </>
+            </div>
           )}
         </div>
       </Section>
@@ -709,20 +722,36 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
           </Field>
         )}
 
-        <div className="flex items-center gap-3">
-          <Switch
-            id="negotiable"
-            checked={!!isNegotiable}
-            onCheckedChange={(v) => setValue("isNegotiable", v)}
-          />
-          <Label htmlFor="negotiable">Price is negotiable</Label>
-        </div>
+        <button
+          type="button"
+          onClick={() => setValue("isNegotiable", !isNegotiable)}
+          className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl border-2 transition-all cursor-pointer text-left ${
+            isNegotiable
+              ? "bg-blue-50 border-blue-400 text-blue-700"
+              : "bg-[#F8F9F7] border-dashed border-border hover:border-blue-300 text-muted-foreground hover:text-blue-600"
+          }`}
+        >
+          <DollarSign className={`w-5 h-5 shrink-0 ${isNegotiable ? "text-blue-500" : "text-muted-foreground"}`} />
+          <div>
+            <p className={`font-bold text-sm ${isNegotiable ? "text-blue-700" : "text-ink"}`}>
+              {isNegotiable ? "Price is negotiable" : "Mark as negotiable"}
+            </p>
+            <p className="text-xs mt-0.5 opacity-60">
+              {isNegotiable ? "Buyers can make offers below asking price" : "Click to allow price negotiations"}
+            </p>
+          </div>
+          <div className={`ml-auto w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${isNegotiable ? "bg-blue-400 border-blue-400" : "border-border"}`}>
+            {isNegotiable && <span className="w-2 h-2 rounded-full bg-white" />}
+          </div>
+        </button>
       </Section>
 
       {/* ── Images ── */}
       <Section title="Images" icon={<ImageIcon className="w-4 h-4" />}>
         <div className="space-y-4">
-          <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-xl hover:border-emerald-brand transition-colors cursor-pointer bg-mist/50">
+          <label className={`flex flex-col items-center justify-center w-full h-36 border-2 border-dashed rounded-2xl transition-all cursor-pointer ${
+            uploading ? "border-emerald-brand/50 bg-emerald-brand/5" : "border-border hover:border-emerald-brand bg-[#F8FAF9] hover:bg-emerald-brand/5"
+          }`}>
             <input
               type="file"
               multiple
@@ -732,14 +761,15 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
               disabled={uploading}
             />
             {uploading ? (
-              <span className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Uploading…
+              <span className="flex flex-col items-center gap-2 text-sm text-emerald-brand">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span className="font-medium">Uploading…</span>
               </span>
             ) : (
-              <span className="flex flex-col items-center gap-1 text-sm text-muted-foreground">
-                <Upload className="w-5 h-5" />
-                Click to upload photos
+              <span className="flex flex-col items-center gap-1.5 text-sm text-muted-foreground">
+                <Upload className="w-6 h-6 text-emerald-brand/60" />
+                <span className="font-semibold text-ink/60">Click to upload photos</span>
+                <span className="text-xs">JPG, PNG, WebP — multiple supported</span>
               </span>
             )}
           </label>
@@ -891,23 +921,32 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
 
       {/* ── Featured ── */}
       <Section title="Featured Listing" icon={<Star className="w-4 h-4" />}>
-        <div className="flex items-center gap-3 mb-4">
-          <Switch
-            id="featured"
-            checked={!!isFeatured}
-            onCheckedChange={(v) => setValue("isFeatured", v)}
-          />
-          <Label htmlFor="featured">Mark as Featured</Label>
-          {isFeatured && (
-            <Badge className="bg-laterite/10 text-laterite border-laterite/30">
-              Featured
-            </Badge>
-          )}
-        </div>
+        <button
+          type="button"
+          onClick={() => setValue("isFeatured", !isFeatured)}
+          className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl border-2 transition-all cursor-pointer text-left ${
+            isFeatured
+              ? "bg-laterite/8 border-laterite text-laterite"
+              : "bg-[#F8F9F7] border-dashed border-border hover:border-laterite/50 text-muted-foreground hover:text-laterite"
+          }`}
+        >
+          <Star className={`w-6 h-6 shrink-0 ${isFeatured ? "fill-laterite text-laterite" : ""}`} />
+          <div>
+            <p className={`font-bold text-sm ${isFeatured ? "text-laterite" : "text-ink"}`}>
+              {isFeatured ? "Featured — Pinned to homepage" : "Mark as Featured"}
+            </p>
+            <p className="text-xs mt-0.5 opacity-70">
+              {isFeatured ? "Click to remove from featured" : "Pin this listing to the homepage hero section"}
+            </p>
+          </div>
+          <div className={`ml-auto w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${isFeatured ? "bg-laterite border-laterite" : "border-border"}`}>
+            {isFeatured && <span className="w-2 h-2 rounded-full bg-white" />}
+          </div>
+        </button>
 
         {isFeatured && (
-          <div className="grid grid-cols-2 gap-4 p-4 bg-mist rounded-xl border border-border">
-            <p className="col-span-2 text-xs text-muted-foreground font-medium uppercase tracking-wide">
+          <div className="grid grid-cols-2 gap-4 p-4 bg-[#F8F9F7] rounded-xl border border-border/60 mt-2">
+            <p className="col-span-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
               Offline Payment Record
             </p>
             <Field label="Paid By">
@@ -926,13 +965,19 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
         )}
       </Section>
 
-      {/* ── Actions ── */}
-      <div className="flex items-center gap-3 pt-4 border-t border-border">
+      {/* ── Actions (sticky bar) ── */}
+      <div className="sticky bottom-0 -mx-5 sm:-mx-8 px-5 sm:px-8 py-4 bg-white/95 backdrop-blur-sm border-t border-black/[0.07] flex items-center gap-3 flex-wrap">
+        {saveError && (
+          <p className="w-full text-xs text-red-600 flex items-center gap-1.5">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            {saveError}
+          </p>
+        )}
         <button
           type="button"
           disabled={saving}
           onClick={handleSubmit((d) => onSubmit(d, "draft"))}
-          className="px-5 py-2 rounded-lg border border-border text-ink text-sm font-medium hover:bg-mist transition-colors disabled:opacity-60"
+          className="px-5 py-2.5 rounded-xl border-2 border-border text-ink text-sm font-semibold hover:bg-mist transition-colors disabled:opacity-60 cursor-pointer"
         >
           Save Draft
         </button>
@@ -940,7 +985,7 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
           type="button"
           disabled={saving}
           onClick={handleSubmit((d) => onSubmit(d, "published"))}
-          className="px-5 py-2 rounded-lg bg-emerald-brand hover:bg-leaf text-cream text-sm font-medium transition-colors disabled:opacity-60 flex items-center gap-2"
+          className="px-6 py-2.5 rounded-xl bg-emerald-brand hover:bg-leaf text-cream text-sm font-bold transition-colors disabled:opacity-60 flex items-center gap-2 cursor-pointer shadow-sm"
         >
           {saving && <Loader2 className="w-4 h-4 animate-spin" />}
           {listingId ? "Update & Publish" : "Publish Listing"}
@@ -951,7 +996,7 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
               type="button"
               disabled={saving}
               onClick={handleSubmit((d) => onSubmit(d, "sold"))}
-              className="px-5 py-2 rounded-lg bg-laterite/90 hover:bg-laterite text-cream text-sm font-medium transition-colors disabled:opacity-60"
+              className="px-5 py-2.5 rounded-xl bg-laterite/90 hover:bg-laterite text-cream text-sm font-semibold transition-colors disabled:opacity-60 cursor-pointer"
             >
               Mark Sold
             </button>
@@ -959,7 +1004,7 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
               type="button"
               disabled={saving}
               onClick={handleSubmit((d) => onSubmit(d, "archived"))}
-              className="px-5 py-2 rounded-lg border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 transition-colors disabled:opacity-60"
+              className="px-5 py-2.5 rounded-xl border-2 border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50 transition-colors disabled:opacity-60 cursor-pointer"
             >
               Archive
             </button>
@@ -981,8 +1026,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-cream rounded-2xl border border-border p-6 space-y-4">
-      <h2 className="flex items-center gap-2 text-sm font-semibold text-forest uppercase tracking-wide">
+    <div className="bg-white rounded-2xl border border-black/[0.07] p-6 space-y-4">
+      <h2 className="flex items-center gap-2 text-xs font-bold text-forest/70 uppercase tracking-[0.12em]">
         {icon}
         {title}
       </h2>

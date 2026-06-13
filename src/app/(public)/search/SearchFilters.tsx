@@ -291,8 +291,8 @@ export function SearchFilters({
       </div>
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:block sticky top-20">
-        <div className="bg-cream rounded-2xl border border-border p-5">
+      <div className="hidden lg:block sticky top-24">
+        <div className="bg-cream rounded-2xl border border-border p-5 max-h-[calc(100vh-7rem)] overflow-y-auto">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-semibold text-forest flex items-center gap-2">
               <SlidersHorizontal className="w-4 h-4" />
